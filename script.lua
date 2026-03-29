@@ -6,13 +6,13 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local DISCORD_LINK = "https://discord.gg/G2KKtYjxcD"
 
---// ETAT DU SCRIPT
+--// VARIABLES DE SESSION
 local IsVIP = false
 local AccessGranted = false
 local SessionStartTime = 0
 local AutoFarmEnabled = false
 
---// VALIDATEUR ALGORITHMIQUE (Vérifie la structure, pas une liste fixe)
+--// VALIDATEUR DE CLÉ (ALGORITHMIQUE)
 local function validateStructure(input)
     local separator = input:find("_")
     if not separator then return false, "Format: Prefix_Key" end
@@ -20,17 +20,17 @@ local function validateStructure(input)
     local prefix = input:sub(1, separator - 1)
     local keyBody = input:sub(separator + 1)
     
-    -- 1. Vérification du préfixe
+    -- Verif Prefixe
     if prefix ~= "Keyzerfree" and prefix ~= "Keyzervip" then
-        return false, "Invalid Prefix (free/vip)"
+        return false, "Invalid Prefix"
     end
     
-    -- 2. Vérification longueur (35 caractères après le _)
-    if #keyBody ~= 35 then 
-        return false, "Body must be 35 chars (Current: "..#keyBody..")" 
+    -- Verif Longueur (On autorise une petite marge au cas où)
+    if #keyBody < 35 then 
+        return false, "Key too short (Need 35)" 
     end
 
-    -- 3. Comptage Majuscules et Chiffres
+    -- Comptage Majuscules et Chiffres
     local uppers, digits = 0, 0
     for i = 1, #keyBody do
         local char = keyBody:sub(i,i)
@@ -47,8 +47,8 @@ end
 --// GUI PRINCIPAL
 local gui = Instance.new("ScreenGui", game.CoreGui)
 local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(0, 360, 0, 280)
-main.Position = UDim2.new(0.5, -180, 0.5, -140)
+main.Size = UDim2.new(0, 360, 0, 300)
+main.Position = UDim2.new(0.5, -180, 0.5, -150)
 main.BackgroundColor3 = Color3.new(0, 0, 0) -- FULL BLACK
 main.BorderSizePixel = 0
 Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
@@ -114,7 +114,25 @@ dBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
 dBtn.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", dBtn)
 
--- --- VALIDATION ---
+-- --- FONCTION ESP ---
+local function EnableESP()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            local h = p.Character:FindFirstChild("Highlight") or Instance.new("Highlight", p.Character)
+            RunService.RenderStepped:Connect(function()
+                if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then
+                    h.FillColor = Color3.new(1, 0, 0) -- Murd
+                elseif p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun") then
+                    h.FillColor = Color3.new(0, 0, 1) -- Sherif
+                else
+                    h.FillColor = Color3.new(0, 1, 0) -- Inno
+                end
+            end)
+        end
+    end
+end
+
+-- --- LOGIQUE VALIDATION ---
 vBtn.MouseButton1Click:Connect(function()
     local success, prefix = validateStructure(keyBox.Text)
     if success then
@@ -126,6 +144,7 @@ vBtn.MouseButton1Click:Connect(function()
         task.wait(1.5)
         loginPage.Visible = false
         farmPage.Visible = true
+        EnableESP()
     else
         vBtn.Text = prefix
         task.wait(2)
@@ -140,7 +159,7 @@ dBtn.MouseButton1Click:Connect(function()
     dBtn.Text = "Discord (Get Key)"
 end)
 
--- --- PAGE FARM ---
+-- --- PAGE FARM (AUTO FARM & LOW GRAPHICS) ---
 local farmToggle = Instance.new("TextButton", farmPage)
 farmToggle.Size = UDim2.new(0, 250, 0, 50)
 farmToggle.Position = UDim2.new(0.5, -125, 0.15, 0)
@@ -157,22 +176,27 @@ lowG.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 lowG.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", lowG)
 
--- LOGIQUE AUTO FARM
 farmToggle.MouseButton1Click:Connect(function()
     AutoFarmEnabled = not AutoFarmEnabled
     farmToggle.Text = "Auto-Farm: " .. (AutoFarmEnabled and "ON" or "OFF")
     farmToggle.BackgroundColor3 = AutoFarmEnabled and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(200, 0, 0)
 end)
 
+-- LOGIQUE AUTO-FARM (SCAN DES MAPS MM2)
 task.spawn(function()
     while task.wait(0.8) do
         if AutoFarmEnabled and AccessGranted then
             pcall(function()
-                local coin = workspace:FindFirstChild("CoinContainer", true)
-                if coin then
-                    local target = coin:FindFirstChildWhichIsA("BasePart")
-                    if target then
-                        LocalPlayer.Character:SetPrimaryPartCFrame(target.CFrame)
+                local char = LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    -- Cherche le container des pièces
+                    local container = workspace:FindFirstChild("CoinContainer", true)
+                    if container then
+                        local coin = container:FindFirstChildWhichIsA("BasePart")
+                        if coin then
+                            coin.Color = Color3.fromRGB(255, 0, 0) -- Pièce devient rouge
+                            char.HumanoidRootPart.CFrame = coin.CFrame
+                        end
                     end
                 end
             end)
@@ -185,10 +209,10 @@ lowG.MouseButton1Click:Connect(function()
     for _, v in pairs(workspace:GetDescendants()) do
         if v:IsA("BasePart") then v.Material = Enum.Material.SmoothPlastic end
     end
-    lowG.Text = "Graphics: LOW"
+    lowG.Text = "Graphics: LOW ✅"
 end)
 
--- TIMER (5 MIN FREE)
+-- SESSION TIMER (5 MIN POUR FREE)
 task.spawn(function()
     while task.wait(1) do
         if AccessGranted and not IsVIP then
@@ -198,7 +222,8 @@ task.spawn(function()
 end)
 
 close.MouseButton1Click:Connect(function() gui:Destroy() end)
--- DRAG
+
+-- DRAG SYSTEM
 local d, ds, sp
 top.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then d = true ds = i.Position sp = main.Position end end)
 UIS.InputChanged:Connect(function(i) if d and i.UserInputType == Enum.UserInputType.MouseMovement then local delta = i.Position - ds main.Position = UDim2.new(sp.X.Scale, sp.X.Offset + delta.X, sp.Y.Scale, sp.Y.Offset + delta.Y) end end)
