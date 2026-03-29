@@ -10,15 +10,15 @@ local AccessGranted = false
 local SessionStartTime = 0
 local AutoFarmEnabled = false
 
---// VALIDATEUR
+--// VALIDATEUR SANS FAILLE
 local function validateKey(input)
     local separator = input:find("_")
-    if not separator then return false, "Format: Prefix_Key" end
+    if not separator then return false end
     
     local prefix = input:sub(1, separator - 1)
-    local keyBody = input:sub(separator + 1):gsub("%s+", "")
+    local keyBody = input:sub(separator + 1):gsub("%s+", "") -- Supprime les espaces
     
-    if #keyBody < 35 then return false, "Need 35 chars" end
+    if #keyBody < 35 then return false end
 
     local uppers, lowers, digits = 0, 0, 0
     for i = 1, #keyBody do
@@ -31,13 +31,12 @@ local function validateKey(input)
     if prefix == "Keyzerfree" then
         if uppers >= 4 and digits >= 16 then return true, "Keyzerfree" end
     elseif prefix == "Keyzervip" then
-        -- L'INVERSE : 3 minuscules pile, le reste MAJ/Digits
         if lowers == 3 and digits >= 16 then return true, "Keyzervip" end
     end
-    return false, "Invalid Structure"
+    return false
 end
 
---// GUI
+--// UI DESIGN
 local gui = Instance.new("ScreenGui", game.CoreGui)
 local main = Instance.new("Frame", gui)
 main.Size = UDim2.new(0, 360, 0, 300)
@@ -58,6 +57,7 @@ title.TextColor3 = Color3.new(1, 1, 1)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 20
 title.BackgroundTransparency = 1
+title.TextXAlignment = Enum.TextXAlignment.Left
 
 local close = Instance.new("TextButton", top)
 close.Size = UDim2.new(0, 30, 0, 30)
@@ -81,7 +81,8 @@ farmPage.Visible = false
 local keyBox = Instance.new("TextBox", loginPage)
 keyBox.Size = UDim2.new(0, 300, 0, 45)
 keyBox.Position = UDim2.new(0.5, -150, 0.1, 0)
-keyBox.PlaceholderText = "Paste Key..."
+keyBox.PlaceholderText = "ENTRE TA KEY ICI"
+keyBox.Text = ""
 keyBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 keyBox.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", keyBox)
@@ -89,55 +90,57 @@ Instance.new("UICorner", keyBox)
 local vBtn = Instance.new("TextButton", loginPage)
 vBtn.Size = UDim2.new(0, 200, 0, 45)
 vBtn.Position = UDim2.new(0.5, -100, 0.4, 0)
-vBtn.Text = "Validate"
+vBtn.Text = "VALIDER"
 vBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 vBtn.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", vBtn)
 
 local dBtn = Instance.new("TextButton", loginPage)
-dBtn.Size = UDim2.new(1, 0, 0, 40)
-dBtn.Position = UDim2.new(0, 0, 0.85, 0)
-dBtn.Text = "Discord Link"
+dBtn.Size = UDim2.new(0, 300, 0, 40)
+dBtn.Position = UDim2.new(0.5, -150, 0.8, 0)
+dBtn.Text = "LIEN DISCORD (GET KEY)"
 dBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
 dBtn.TextColor3 = Color3.new(1, 1, 1)
+Instance.new("UICorner", dBtn)
 
---// ACTIONS
+--// LOGIQUE
 vBtn.MouseButton1Click:Connect(function()
     local ok, res = validateKey(keyBox.Text)
     if ok then
         IsVIP = (res == "Keyzervip")
         AccessGranted = true
         SessionStartTime = tick()
-        vBtn.Text = "Welcome " .. LocalPlayer.Name .. (IsVIP and " [🌟]" or "")
-        vBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+        vBtn.Text = "WELCOME " .. (IsVIP and "[🌟] " or "") .. LocalPlayer.Name
+        vBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
         task.wait(1.5)
         loginPage.Visible = false
         farmPage.Visible = true
     else
-        vBtn.Text = "INVALID STRUCTURE"
+        vBtn.Text = "KEY INVALIDE"
         task.wait(1)
-        vBtn.Text = "Validate"
+        vBtn.Text = "VALIDER"
     end
 end)
 
 dBtn.MouseButton1Click:Connect(function()
     setclipboard(DISCORD_LINK)
-    dBtn.Text = "COPIED"
+    dBtn.Text = "LIEN COPIÉ"
     task.wait(1)
-    dBtn.Text = "Discord Link"
+    dBtn.Text = "LIEN DISCORD (GET KEY)"
 end)
 
+--// FARM PAGE
 local farmToggle = Instance.new("TextButton", farmPage)
 farmToggle.Size = UDim2.new(0, 250, 0, 50)
 farmToggle.Position = UDim2.new(0.5, -125, 0.15, 0)
-farmToggle.Text = "Auto-Farm: OFF"
+farmToggle.Text = "AUTO-FARM: OFF"
 farmToggle.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 farmToggle.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", farmToggle)
 
 farmToggle.MouseButton1Click:Connect(function()
     AutoFarmEnabled = not AutoFarmEnabled
-    farmToggle.Text = "Auto-Farm: " .. (AutoFarmEnabled and "ON" or "OFF")
+    farmToggle.Text = "AUTO-FARM: " .. (AutoFarmEnabled and "ON" or "OFF")
     farmToggle.BackgroundColor3 = AutoFarmEnabled and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(200, 0, 0)
 end)
 
@@ -145,9 +148,9 @@ task.spawn(function()
     while task.wait(0.7) do
         if AutoFarmEnabled and AccessGranted then
             pcall(function()
-                local coin = workspace:FindFirstChild("CoinContainer", true)
-                if coin then
-                    local target = coin:FindFirstChildWhichIsA("BasePart")
+                local container = workspace:FindFirstChild("CoinContainer", true)
+                if container then
+                    local target = container:FindFirstChildWhichIsA("BasePart")
                     if target then
                         LocalPlayer.Character.HumanoidRootPart.CFrame = target.CFrame
                     end
@@ -159,7 +162,7 @@ end)
 
 close.MouseButton1Click:Connect(function() gui:Destroy() end)
 
---// DRAG
+--// DRAG SYSTEM
 local d, ds, sp
 top.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then d = true ds = i.Position sp = main.Position end end)
 UIS.InputChanged:Connect(function(i) if d and i.UserInputType == Enum.UserInputType.MouseMovement then local delta = i.Position - ds main.Position = UDim2.new(sp.X.Scale, sp.X.Offset + delta.X, sp.Y.Scale, sp.Y.Offset + delta.Y) end end)
