@@ -8,7 +8,7 @@ local DISCORD_LINK = "https://discord.gg/G2KKtYjxcD"
 local AccessGranted = false
 local AutoFarmEnabled = false
 
---// GUI PRINCIPAL
+--// MAIN GUI
 local gui = Instance.new("ScreenGui", game.CoreGui)
 local main = Instance.new("Frame", gui)
 main.Size = UDim2.new(0, 360, 0, 300)
@@ -17,6 +17,7 @@ main.BackgroundColor3 = Color3.new(0, 0, 0)
 main.BorderSizePixel = 0
 Instance.new("UICorner", main)
 
+--// TOPBAR
 local top = Instance.new("Frame", main)
 top.Size = UDim2.new(1, 0, 0, 45)
 top.BackgroundTransparency = 1
@@ -24,7 +25,7 @@ top.BackgroundTransparency = 1
 local title = Instance.new("TextLabel", top)
 title.Size = UDim2.new(1, -50, 1, 0)
 title.Position = UDim2.new(0, 15, 0, 0)
-title.Text = "Keyzer 💯"
+title.Text = "Keyzer Hub 💯"
 title.TextColor3 = Color3.new(1, 1, 1)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 20
@@ -39,7 +40,7 @@ close.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 close.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", close)
 
--- PAGES
+--// PAGES
 local loginPage = Instance.new("Frame", main)
 loginPage.Size = UDim2.new(1, 0, 1, -45)
 loginPage.Position = UDim2.new(0, 0, 0, 45)
@@ -51,11 +52,11 @@ farmPage.Position = UDim2.new(0, 0, 0, 45)
 farmPage.BackgroundTransparency = 1
 farmPage.Visible = false
 
--- UI LOGIN
+--// LOGIN UI
 local keyBox = Instance.new("TextBox", loginPage)
 keyBox.Size = UDim2.new(0, 300, 0, 45)
 keyBox.Position = UDim2.new(0.5, -150, 0.1, 0)
-keyBox.PlaceholderText = "ENTRE LA KEY : Keyzerhub_404"
+keyBox.PlaceholderText = "Enter Key: Keyzerhub_404"
 keyBox.Text = ""
 keyBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 keyBox.TextColor3 = Color3.new(1, 1, 1)
@@ -64,7 +65,7 @@ Instance.new("UICorner", keyBox)
 local vBtn = Instance.new("TextButton", loginPage)
 vBtn.Size = UDim2.new(0, 200, 0, 45)
 vBtn.Position = UDim2.new(0.5, -100, 0.4, 0)
-vBtn.Text = "VALIDER"
+vBtn.Text = "VALIDATE"
 vBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 vBtn.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", vBtn)
@@ -72,50 +73,51 @@ Instance.new("UICorner", vBtn)
 local dBtn = Instance.new("TextButton", loginPage)
 dBtn.Size = UDim2.new(0, 300, 0, 40)
 dBtn.Position = UDim2.new(0.5, -150, 0.8, 0)
-dBtn.Text = "LIEN DISCORD"
+dBtn.Text = "DISCORD LINK"
 dBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
 dBtn.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", dBtn)
 
---// LOGIQUE DE VALIDATION
+--// VALIDATION LOGIC (WITH AUTO-TRIM)
 vBtn.MouseButton1Click:Connect(function()
-    if keyBox.Text == "Keyzerhub_404" then
+    local input = keyBox.Text:gsub("%s+", "") -- Cleans spaces automatically
+    if input == "Keyzerhub_404" then
         AccessGranted = true
-        vBtn.Text = "ACCÈS AUTORISÉ"
+        vBtn.Text = "ACCESS GRANTED"
         vBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
         task.wait(1)
         loginPage.Visible = false
         farmPage.Visible = true
     else
-        vBtn.Text = "MAUVAISE KEY"
+        vBtn.Text = "INVALID KEY"
         task.wait(1)
-        vBtn.Text = "VALIDER"
+        vBtn.Text = "VALIDATE"
     end
 end)
 
 dBtn.MouseButton1Click:Connect(function()
     if setclipboard then setclipboard(DISCORD_LINK) end
-    dBtn.Text = "COPIÉ"
+    dBtn.Text = "LINK COPIED"
     task.wait(1)
-    dBtn.Text = "LIEN DISCORD"
+    dBtn.Text = "DISCORD LINK"
 end)
 
---// PAGE FARM
+--// FARM PAGE CONTENT
 local farmToggle = Instance.new("TextButton", farmPage)
 farmToggle.Size = UDim2.new(0, 250, 0, 50)
-farmToggle.Position = UDim2.new(0.5, -125, 0.15, 0)
-farmToggle.Text = "AUTO-FARM: OFF"
+farmToggle.Position = UDim2.new(0.5, -125, 0.2, 0)
+farmToggle.Text = "Auto-Farm: OFF"
 farmToggle.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 farmToggle.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", farmToggle)
 
 farmToggle.MouseButton1Click:Connect(function()
     AutoFarmEnabled = not AutoFarmEnabled
-    farmToggle.Text = "AUTO-FARM: " .. (AutoFarmEnabled and "ON" or "OFF")
+    farmToggle.Text = "Auto-Farm: " .. (AutoFarmEnabled and "ON" or "OFF")
     farmToggle.BackgroundColor3 = AutoFarmEnabled and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(200, 0, 0)
 end)
 
--- LOGIQUE AUTO-FARM MM2
+--// MM2 FARM LOOP
 task.spawn(function()
     while task.wait(0.7) do
         if AutoFarmEnabled and AccessGranted then
