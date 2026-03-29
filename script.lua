@@ -9,11 +9,11 @@ local LocalPlayer = Players.LocalPlayer
 local ADMIN_NAME = "Nerx0ox"
 local MM2_PLACE_ID = 142823291
 
--- ❌ CHECK MM2
+-- ❌ CHECK MM2 PLACE ID
 if game.PlaceId ~= MM2_PLACE_ID then
     game.StarterGui:SetCore("SendNotification", {
         Title = "Keyzer 💯",
-        Text = "Are you lost ...?",
+        Text = "Are you lost...?",
         Duration = 5
     })
     return
@@ -37,13 +37,13 @@ local function isValidKey(key, isVIP)
     return u>=3 and l>=5 and d>=2
 end
 
---// GUI PRINCIPAL
+--// MAIN GUI
 local gui = Instance.new("ScreenGui", game.CoreGui)
 
 local main = Instance.new("Frame", gui)
 main.Size = UDim2.new(0, 360, 0, 240)
-main.Position = UDim2.new(0.5,-180,0.5,-120)
-main.BackgroundColor3 = Color3.fromRGB(10, 20, 40) -- 🔵 FONT BLEU FONCÉ
+main.Position = UDim2.new(0.5, -180, 0.5, -120)
+main.BackgroundColor3 = Color3.fromRGB(2, 4, 15) -- 🔵 FOND BLEU TRÈS FONCÉ
 main.BorderSizePixel = 0
 
 local corner = Instance.new("UICorner", main)
@@ -69,27 +69,28 @@ local close = Instance.new("TextButton", top)
 close.Size = UDim2.new(0, 30, 0, 30)
 close.Position = UDim2.new(1, -35, 0, 5)
 close.Text = "❌"
-close.BackgroundColor3 = Color3.fromRGB(200, 0, 0) -- 🔴 ROUGE
+close.BackgroundColor3 = Color3.fromRGB(180, 0, 0) -- 🔴 ROUGE
 close.TextColor3 = Color3.new(1, 1, 1)
+close.Font = Enum.Font.Gotham
 Instance.new("UICorner", close)
 
--- ZONE DE TEXTE (INSERER KEY)
+-- ZONE DE TEXTE (INSERER KEY ICI...)
 local keyBox = Instance.new("TextBox", main)
 keyBox.Size = UDim2.new(0, 280, 0, 45)
 keyBox.Position = UDim2.new(0.5, -140, 0.4, 0)
-keyBox.PlaceholderText = "Insert your key here..." -- 📝 TRADUCTION ANGLAIS
+keyBox.PlaceholderText = "Insert your key here..." -- 📝 TEXTE MODIFIÉ
 keyBox.Text = ""
-keyBox.BackgroundColor3 = Color3.fromRGB(20, 35, 65)
+keyBox.BackgroundColor3 = Color3.fromRGB(15, 25, 45)
 keyBox.TextColor3 = Color3.new(1, 1, 1)
 keyBox.Font = Enum.Font.Gotham
 Instance.new("UICorner", keyBox)
 
 -- BOUTON VALIDER (ROUGE)
 local keyBtn = Instance.new("TextButton", main)
-keyBtn.Size = UDim2.new(0, 200, 0, 45)
-keyBtn.Position = UDim2.new(0.5, -100, 0.7, 0)
+keyBtn.Size = UDim2.new(0, 220, 0, 45)
+keyBtn.Position = UDim2.new(0.5, -110, 0.7, 0)
 keyBtn.Text = "Validate"
-keyBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0) -- 🔴 ROUGE
+keyBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0) -- 🔴 ROUGE
 keyBtn.TextColor3 = Color3.new(1, 1, 1)
 keyBtn.Font = Enum.Font.GothamBold
 Instance.new("UICorner", keyBtn)
@@ -103,11 +104,11 @@ status.TextColor3 = Color3.fromRGB(255, 50, 50)
 status.Text = ""
 status.Font = Enum.Font.Gotham
 
---// WELCOME SCREEN
+--// WELCOME SCREEN (MODIFIÉ)
 local welcome = main:Clone()
 welcome.Parent = gui
 welcome.Visible = false
-welcome:ClearAllChildren() -- On nettoie le clone pour refaire le design propre
+welcome:ClearAllChildren() -- Nettoyage pour refaire le design propre
 
 Instance.new("UICorner", welcome)
 local wTitle = title:Clone()
@@ -115,14 +116,14 @@ wTitle.Parent = welcome
 wTitle.Text = "Access Granted"
 
 local avatar = Instance.new("ImageLabel", welcome)
-avatar.Size = UDim2.new(0, 70, 0, 70)
-avatar.Position = UDim2.new(0.5, -35, 0.25, 0)
+avatar.Size = UDim2.new(0, 80, 0, 80)
+avatar.Position = UDim2.new(0.5, -40, 0.2, 0)
 avatar.BackgroundTransparency = 1
 local avCorner = Instance.new("UICorner", avatar)
-avCorner.CornerRadius = UDim.new(1, 0)
+avCorner.CornerRadius = UDim.new(1, 0) -- Avatar rond
 
 local nameLabel = Instance.new("TextLabel", welcome)
-nameLabel.Size = UDim2.new(1, 0, 0, 30)
+nameLabel.Size = UDim2.new(1, 0, 0, 40)
 nameLabel.Position = UDim2.new(0, 0, 0.6, 0)
 nameLabel.BackgroundTransparency = 1
 nameLabel.TextColor3 = Color3.new(1, 1, 1)
@@ -130,10 +131,10 @@ nameLabel.Font = Enum.Font.GothamBold
 nameLabel.TextSize = 16
 
 local cont = Instance.new("TextButton", welcome)
-cont.Size = UDim2.new(0, 160, 0, 40)
-cont.Position = UDim2.new(0.5, -80, 0.8, 0)
+cont.Size = UDim2.new(0, 180, 0, 40)
+cont.Position = UDim2.new(0.5, -90, 0.8, 0)
 cont.Text = "Continue"
-cont.BackgroundColor3 = Color3.fromRGB(200, 0, 0) -- 🔴 ROUGE
+cont.BackgroundColor3 = Color3.fromRGB(180, 0, 0) -- 🔴 ROUGE
 cont.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", cont)
 
@@ -143,7 +144,7 @@ keyBtn.MouseButton1Click:Connect(function()
     local vip = key:match("^Keyzervip_")
 
     if not isValidKey(key, vip) then
-        status.Text = "Invalid Key!"
+        status.Text = "Invalid key, try again."
         return
     end
 
@@ -156,11 +157,11 @@ end)
 
 cont.MouseButton1Click:Connect(function()
     welcome.Visible = false
-    main.Visible = true
-    -- Affiche les fonctions du cheat ici
+    main.Visible = true -- Rappel du GUI principal pour l'interface finale
+    -- Ici, tu masquerais la partie clé pour afficher tes fonctions de cheat
     keyBox.Visible = false
     keyBtn.Visible = false
-    status.Text = "System Ready"
+    status.Text = "Cheat Activated"
     status.TextColor3 = Color3.new(0, 1, 0)
 end)
 
