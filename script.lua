@@ -5,189 +5,128 @@ local TweenService = game:GetService("TweenService")
 
 local LocalPlayer = Players.LocalPlayer
 
---// CONFIG
-local ADMIN_NAME = "Nerx0ox"
-local MM2_PLACE_ID = 142823291
+--// GUI PRINCIPAL
+local gui = Instance.new("ScreenGui")
+gui.Name = "KeyzerSystem"
+gui.Parent = game.CoreGui
+gui.ResetOnSpawn = false
 
--- ❌ CHECK MM2 PLACE ID
-if game.PlaceId ~= MM2_PLACE_ID then
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "Keyzer 💯",
-        Text = "Are you lost...?",
-        Duration = 5
-    })
-    return
-end
-
---// KEY SYSTEM
-local usedKeys = {}
-local function isValidKey(key, isVIP)
-    if isVIP then
-        if not key:match("^Keyzervip_") then return false end
-    else
-        if not key:match("^Keyzer_") then return false end
-    end
-    if #key ~= 18 then return false end
-    local u,l,d = 0,0,0
-    for c in key:gmatch(".") do
-        if c:match("%u") then u+=1
-        elseif c:match("%l") then l+=1
-        elseif c:match("%d") then d+=1 end
-    end
-    return u>=3 and l>=5 and d>=2
-end
-
---// MAIN GUI
-local gui = Instance.new("ScreenGui", game.CoreGui)
-
-local main = Instance.new("Frame", gui)
+-- CADRE PRINCIPAL (BLEU ROYAL)
+local main = Instance.new("Frame")
+main.Name = "MainFrame"
+main.Parent = gui
 main.Size = UDim2.new(0, 360, 0, 240)
 main.Position = UDim2.new(0.5, -180, 0.5, -120)
-main.BackgroundColor3 = Color3.fromRGB(2, 4, 15) -- 🔵 FOND BLEU TRÈS FONCÉ
+main.BackgroundColor3 = Color3.fromRGB(0, 80, 200) -- 🔵 VRAI BLEU
 main.BorderSizePixel = 0
+main.ClipsDescendants = true
 
 local corner = Instance.new("UICorner", main)
-corner.CornerRadius = UDim.new(0, 10)
+corner.CornerRadius = UDim.new(0, 15)
 
--- TOPBAR
-local top = Instance.new("Frame", main)
-top.Size = UDim2.new(1, 0, 0, 40)
-top.BackgroundTransparency = 1
+-- BARRE DE TITRE
+local topBar = Instance.new("Frame", main)
+topBar.Size = UDim2.new(1, 0, 0, 45)
+topBar.BackgroundTransparency = 1
 
-local title = Instance.new("TextLabel", top)
+local title = Instance.new("TextLabel", topBar)
 title.Size = UDim2.new(1, -50, 1, 0)
 title.Position = UDim2.new(0, 15, 0, 0)
 title.Text = "Keyzer 💯"
 title.TextColor3 = Color3.new(1, 1, 1)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 18
+title.TextSize = 20
 title.BackgroundTransparency = 1
 title.TextXAlignment = Enum.TextXAlignment.Left
 
--- BOUTON FERMER (ROUGE AVEC ❌)
-local close = Instance.new("TextButton", top)
-close.Size = UDim2.new(0, 30, 0, 30)
-close.Position = UDim2.new(1, -35, 0, 5)
-close.Text = "❌"
-close.BackgroundColor3 = Color3.fromRGB(180, 0, 0) -- 🔴 ROUGE
-close.TextColor3 = Color3.new(1, 1, 1)
-close.Font = Enum.Font.Gotham
-Instance.new("UICorner", close)
+-- BOUTON FERMER (ROUGE)
+local closeBtn = Instance.new("TextButton", topBar)
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -40, 0, 7)
+closeBtn.Text = "❌"
+closeBtn.TextColor3 = Color3.new(1, 1, 1)
+closeBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- 🔴 ROUGE VIF
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 14
+Instance.new("UICorner", closeBtn)
 
--- ZONE DE TEXTE (INSERER KEY ICI...)
+-- ZONE DE SAISIE (INSERT YOUR KEY HERE)
 local keyBox = Instance.new("TextBox", main)
-keyBox.Size = UDim2.new(0, 280, 0, 45)
+keyBox.Size = UDim2.new(0, 280, 0, 50)
 keyBox.Position = UDim2.new(0.5, -140, 0.4, 0)
-keyBox.PlaceholderText = "Insert your key here..." -- 📝 TEXTE MODIFIÉ
-keyBox.Text = ""
-keyBox.BackgroundColor3 = Color3.fromRGB(15, 25, 45)
+keyBox.BackgroundColor3 = Color3.fromRGB(0, 50, 130) -- Bleu plus foncé pour le contraste
+keyBox.BorderSizePixel = 0
+keyBox.Text = "" -- Vide par défaut
+keyBox.PlaceholderText = "Insert your key here..." -- Texte en anglais
+keyBox.PlaceholderColor3 = Color3.fromRGB(200, 200, 200)
 keyBox.TextColor3 = Color3.new(1, 1, 1)
-keyBox.Font = Enum.Font.Gotham
+keyBox.Font = Enum.Font.GothamMedium
+keyBox.TextSize = 16
 Instance.new("UICorner", keyBox)
 
 -- BOUTON VALIDER (ROUGE)
-local keyBtn = Instance.new("TextButton", main)
-keyBtn.Size = UDim2.new(0, 220, 0, 45)
-keyBtn.Position = UDim2.new(0.5, -110, 0.7, 0)
-keyBtn.Text = "Validate"
-keyBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0) -- 🔴 ROUGE
-keyBtn.TextColor3 = Color3.new(1, 1, 1)
-keyBtn.Font = Enum.Font.GothamBold
-Instance.new("UICorner", keyBtn)
+local validateBtn = Instance.new("TextButton", main)
+validateBtn.Size = UDim2.new(0, 220, 0, 45)
+validateBtn.Position = UDim2.new(0.5, -110, 0.72, 0)
+validateBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- 🔴 ROUGE VIF
+validateBtn.Text = "Validate"
+validateBtn.TextColor3 = Color3.new(1, 1, 1)
+validateBtn.Font = Enum.Font.GothamBold
+validateBtn.TextSize = 18
+Instance.new("UICorner", validateBtn)
 
--- STATUS
-local status = Instance.new("TextLabel", main)
-status.Size = UDim2.new(1, 0, 0, 25)
-status.Position = UDim2.new(0, 0, 0.9, 0)
-status.BackgroundTransparency = 1
-status.TextColor3 = Color3.fromRGB(255, 50, 50)
-status.Text = ""
-status.Font = Enum.Font.Gotham
-
---// WELCOME SCREEN (MODIFIÉ)
-local welcome = main:Clone()
-welcome.Parent = gui
-welcome.Visible = false
-welcome:ClearAllChildren() -- Nettoyage pour refaire le design propre
-
-Instance.new("UICorner", welcome)
-local wTitle = title:Clone()
-wTitle.Parent = welcome
-wTitle.Text = "Access Granted"
-
-local avatar = Instance.new("ImageLabel", welcome)
-avatar.Size = UDim2.new(0, 80, 0, 80)
-avatar.Position = UDim2.new(0.5, -40, 0.2, 0)
-avatar.BackgroundTransparency = 1
-local avCorner = Instance.new("UICorner", avatar)
-avCorner.CornerRadius = UDim.new(1, 0) -- Avatar rond
-
-local nameLabel = Instance.new("TextLabel", welcome)
-nameLabel.Size = UDim2.new(1, 0, 0, 40)
-nameLabel.Position = UDim2.new(0, 0, 0.6, 0)
-nameLabel.BackgroundTransparency = 1
-nameLabel.TextColor3 = Color3.new(1, 1, 1)
-nameLabel.Font = Enum.Font.GothamBold
-nameLabel.TextSize = 16
-
-local cont = Instance.new("TextButton", welcome)
-cont.Size = UDim2.new(0, 180, 0, 40)
-cont.Position = UDim2.new(0.5, -90, 0.8, 0)
-cont.Text = "Continue"
-cont.BackgroundColor3 = Color3.fromRGB(180, 0, 0) -- 🔴 ROUGE
-cont.TextColor3 = Color3.new(1, 1, 1)
-Instance.new("UICorner", cont)
-
---// LOGIQUE DE VALIDATION
-keyBtn.MouseButton1Click:Connect(function()
-    local key = keyBox.Text
-    local vip = key:match("^Keyzervip_")
-
-    if not isValidKey(key, vip) then
-        status.Text = "Invalid key, try again."
-        return
-    end
-
-    avatar.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
-    nameLabel.Text = vip and ("Welcome, "..LocalPlayer.Name.." (VIP)") or ("Welcome, "..LocalPlayer.Name)
-    
-    main.Visible = false
-    welcome.Visible = true
-end)
-
-cont.MouseButton1Click:Connect(function()
-    welcome.Visible = false
-    main.Visible = true -- Rappel du GUI principal pour l'interface finale
-    -- Ici, tu masquerais la partie clé pour afficher tes fonctions de cheat
-    keyBox.Visible = false
-    keyBtn.Visible = false
-    status.Text = "Cheat Activated"
-    status.TextColor3 = Color3.new(0, 1, 0)
-end)
-
---// DRAGGING SYSTEM
-local dragging, dragStart, startPos
-top.InputBegan:Connect(function(i)
-    if i.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = i.Position
-        startPos = main.Position
-    end
-end)
-
-UIS.InputChanged:Connect(function(i)
-    if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = i.Position - dragStart
-        main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        welcome.Position = main.Position
-    end
-end)
-
-UIS.InputEnded:Connect(function(i)
-    if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-end)
-
--- CLOSE ACTION
-close.MouseButton1Click:Connect(function()
+--// LOGIQUE DE FERMETURE
+closeBtn.MouseButton1Click:Connect(function()
     gui:Destroy()
+end)
+
+--// LOGIQUE DE DRAG (Pour bouger le menu)
+local dragging, dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+topBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = main.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        update(input)
+    end
+end)
+
+--// ANIMATION SUR LE BOUTON VALIDER
+validateBtn.MouseEnter:Connect(function()
+    TweenService:Create(validateBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200, 0, 0)}):Play()
+end)
+
+validateBtn.MouseLeave:Connect(function()
+    TweenService:Create(validateBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 0, 0)}):Play()
+end)
+
+--// MESSAGE DE TEST LORS DU CLIC
+validateBtn.MouseButton1Click:Connect(function()
+    if #keyBox.Text > 5 then
+        validateBtn.Text = "Checking..."
+        wait(1)
+        validateBtn.Text = "Success !"
+        validateBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+    else
+        validateBtn.Text = "Invalid Key"
+        wait(1)
+        validateBtn.Text = "Validate"
+    end
 end)
