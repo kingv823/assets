@@ -5,38 +5,10 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local DISCORD_LINK = "https://discord.gg/G2KKtYjxcD"
 
-local IsVIP = false
 local AccessGranted = false
-local SessionStartTime = 0
 local AutoFarmEnabled = false
 
---// VALIDATEUR SANS FAILLE
-local function validateKey(input)
-    local separator = input:find("_")
-    if not separator then return false end
-    
-    local prefix = input:sub(1, separator - 1)
-    local keyBody = input:sub(separator + 1):gsub("%s+", "") -- Supprime les espaces
-    
-    if #keyBody < 35 then return false end
-
-    local uppers, lowers, digits = 0, 0, 0
-    for i = 1, #keyBody do
-        local c = keyBody:sub(i,i)
-        if c:match("%u") then uppers = uppers + 1
-        elseif c:match("%l") then lowers = lowers + 1
-        elseif c:match("%d") then digits = digits + 1 end
-    end
-
-    if prefix == "Keyzerfree" then
-        if uppers >= 4 and digits >= 16 then return true, "Keyzerfree" end
-    elseif prefix == "Keyzervip" then
-        if lowers == 3 and digits >= 16 then return true, "Keyzervip" end
-    end
-    return false
-end
-
---// UI DESIGN
+--// GUI PRINCIPAL
 local gui = Instance.new("ScreenGui", game.CoreGui)
 local main = Instance.new("Frame", gui)
 main.Size = UDim2.new(0, 360, 0, 300)
@@ -62,11 +34,12 @@ title.TextXAlignment = Enum.TextXAlignment.Left
 local close = Instance.new("TextButton", top)
 close.Size = UDim2.new(0, 30, 0, 30)
 close.Position = UDim2.new(1, -38, 0, 7)
-close.Text = "✖️"
+close.Text = "X"
 close.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 close.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", close)
 
+-- PAGES
 local loginPage = Instance.new("Frame", main)
 loginPage.Size = UDim2.new(1, 0, 1, -45)
 loginPage.Position = UDim2.new(0, 0, 0, 45)
@@ -78,10 +51,11 @@ farmPage.Position = UDim2.new(0, 0, 0, 45)
 farmPage.BackgroundTransparency = 1
 farmPage.Visible = false
 
+-- UI LOGIN
 local keyBox = Instance.new("TextBox", loginPage)
 keyBox.Size = UDim2.new(0, 300, 0, 45)
 keyBox.Position = UDim2.new(0.5, -150, 0.1, 0)
-keyBox.PlaceholderText = "ENTRE TA KEY ICI"
+keyBox.PlaceholderText = "ENTRE LA KEY : Keyzerhub_404"
 keyBox.Text = ""
 keyBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 keyBox.TextColor3 = Color3.new(1, 1, 1)
@@ -98,38 +72,35 @@ Instance.new("UICorner", vBtn)
 local dBtn = Instance.new("TextButton", loginPage)
 dBtn.Size = UDim2.new(0, 300, 0, 40)
 dBtn.Position = UDim2.new(0.5, -150, 0.8, 0)
-dBtn.Text = "LIEN DISCORD (GET KEY)"
+dBtn.Text = "LIEN DISCORD"
 dBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
 dBtn.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", dBtn)
 
---// LOGIQUE
+--// LOGIQUE DE VALIDATION
 vBtn.MouseButton1Click:Connect(function()
-    local ok, res = validateKey(keyBox.Text)
-    if ok then
-        IsVIP = (res == "Keyzervip")
+    if keyBox.Text == "Keyzerhub_404" then
         AccessGranted = true
-        SessionStartTime = tick()
-        vBtn.Text = "WELCOME " .. (IsVIP and "[🌟] " or "") .. LocalPlayer.Name
+        vBtn.Text = "ACCÈS AUTORISÉ"
         vBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
-        task.wait(1.5)
+        task.wait(1)
         loginPage.Visible = false
         farmPage.Visible = true
     else
-        vBtn.Text = "KEY INVALIDE"
+        vBtn.Text = "MAUVAISE KEY"
         task.wait(1)
         vBtn.Text = "VALIDER"
     end
 end)
 
 dBtn.MouseButton1Click:Connect(function()
-    setclipboard(DISCORD_LINK)
-    dBtn.Text = "LIEN COPIÉ"
+    if setclipboard then setclipboard(DISCORD_LINK) end
+    dBtn.Text = "COPIÉ"
     task.wait(1)
-    dBtn.Text = "LIEN DISCORD (GET KEY)"
+    dBtn.Text = "LIEN DISCORD"
 end)
 
---// FARM PAGE
+--// PAGE FARM
 local farmToggle = Instance.new("TextButton", farmPage)
 farmToggle.Size = UDim2.new(0, 250, 0, 50)
 farmToggle.Position = UDim2.new(0.5, -125, 0.15, 0)
@@ -144,6 +115,7 @@ farmToggle.MouseButton1Click:Connect(function()
     farmToggle.BackgroundColor3 = AutoFarmEnabled and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(200, 0, 0)
 end)
 
+-- LOGIQUE AUTO-FARM MM2
 task.spawn(function()
     while task.wait(0.7) do
         if AutoFarmEnabled and AccessGranted then
