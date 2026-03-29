@@ -4,7 +4,7 @@ local LocalPlayer = Players.LocalPlayer
 local ADMIN_NAME = "Nerx0ox"
 local MM2_PLACE_ID = 142823291
 
--- ❌ pas dans MM2
+-- ❌ Si pas MM2
 if game.PlaceId ~= MM2_PLACE_ID then
     game.StarterGui:SetCore("SendNotification", {
         Title = "Keyzer 💯",
@@ -16,7 +16,6 @@ end
 
 -- 🔑 KEY SYSTEM
 local activeKeys = {}
-local keyExpireTime = 300
 
 local function isValidKey(key, isVIP)
     if isVIP then
@@ -30,25 +29,22 @@ local function isValidKey(key, isVIP)
     local upper, lower, digit = 0,0,0
 
     for c in key:gmatch(".") do
-        if c:match("%u") then
-            upper += 1
-        elseif c:match("%l") then
-            lower += 1
-        elseif c:match("%d") then
-            digit += 1
-        end
+        if c:match("%u") then upper += 1
+        elseif c:match("%l") then lower += 1
+        elseif c:match("%d") then digit += 1 end
     end
 
     return upper >= 3 and lower >= 5 and digit >= 2
 end
 
--- 🔴 GUI
+-- 🔴 GUI BASE
 local gui = Instance.new("ScreenGui", game.CoreGui)
 
+-- 🔑 KEY FRAME
 local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0, 300, 0, 220)
 frame.Position = UDim2.new(0.5, -150, 0.5, -110)
-frame.BackgroundColor3 = Color3.fromRGB(120, 0, 0)
+frame.BackgroundColor3 = Color3.fromRGB(120,0,0)
 
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1,0,0,30)
@@ -80,6 +76,29 @@ status.Position = UDim2.new(0,0,0.8,0)
 status.Text = ""
 status.TextColor3 = Color3.new(1,1,1)
 status.BackgroundTransparency = 1
+
+-- 👋 WELCOME SCREEN
+local welcome = Instance.new("Frame", gui)
+welcome.Size = UDim2.new(0, 300, 0, 180)
+welcome.Position = UDim2.new(0.5, -150, 0.5, -90)
+welcome.BackgroundColor3 = Color3.fromRGB(120,0,0)
+welcome.Visible = false
+
+local avatar = Instance.new("ImageLabel", welcome)
+avatar.Size = UDim2.new(0,80,0,80)
+avatar.Position = UDim2.new(0.5,-40,0.1,0)
+avatar.BackgroundTransparency = 1
+
+local nameLabel = Instance.new("TextLabel", welcome)
+nameLabel.Size = UDim2.new(1,0,0,40)
+nameLabel.Position = UDim2.new(0,0,0.6,0)
+nameLabel.BackgroundTransparency = 1
+nameLabel.TextScaled = true
+
+local continueBtn = Instance.new("TextButton", welcome)
+continueBtn.Size = UDim2.new(0,200,0,40)
+continueBtn.Position = UDim2.new(0.5,-100,0.8,0)
+continueBtn.Text = "Continue"
 
 -- 🎮 MAIN PANEL
 local main = Instance.new("Frame", gui)
@@ -118,12 +137,33 @@ button.MouseButton1Click:Connect(function()
         activeKeys[key] = true
     end
 
-    status.Text = "Access granted"
+    -- 👋 WELCOME SETUP
+    local thumb = Players:GetUserThumbnailAsync(
+        LocalPlayer.UserId,
+        Enum.ThumbnailType.HeadShot,
+        Enum.ThumbnailSize.Size150x150
+    )
+    avatar.Image = thumb
+
+    if isVIP then
+        nameLabel.Text = "Welcome "..LocalPlayer.Name.." - VIP"
+        nameLabel.TextColor3 = Color3.fromRGB(255,215,0)
+    else
+        nameLabel.Text = "Welcome "..LocalPlayer.Name
+        nameLabel.TextColor3 = Color3.new(1,1,1)
+    end
+
     frame.Visible = false
+    welcome.Visible = true
+end)
+
+-- ▶️ CONTINUE
+continueBtn.MouseButton1Click:Connect(function()
+    welcome.Visible = false
     main.Visible = true
 end)
 
--- 🎭 ROLE DISPLAY (simple fake detection)
+-- 🎭 ROLE DISPLAY (placeholder)
 startBtn.MouseButton1Click:Connect(function()
     roleLabel.Text = "Role: Innocent"
     wait(2)
