@@ -11,39 +11,44 @@ local IsVIP = false
 local AccessGranted = false
 local SessionStartTime = 0
 local AutoFarmEnabled = false
-local FarmSpeed = 0.6
 
---// FONCTION DE VERIFICATION ULTRA PRECISE
-local function validateKey(input)
+--// VALIDATEUR ALGORITHMIQUE (Vérifie la structure, pas une liste fixe)
+local function validateStructure(input)
     local separator = input:find("_")
-    if not separator then return false, "Missing '_' separator" end
+    if not separator then return false, "Format: Prefix_Key" end
     
     local prefix = input:sub(1, separator - 1)
     local keyBody = input:sub(separator + 1)
     
-    -- 1. Verif Longueur (50 pile après le _)
-    if #keyBody ~= 50 then 
-        return false, "Key body must be 50 chars (Current: "..#keyBody..")" 
-    end
-
-    -- 2. Verif Majuscules (Minimum 3)
-    local uppers = 0
-    for i = 1, #keyBody do
-        if keyBody:sub(i,i):match("%u") then uppers = uppers + 1 end
+    -- 1. Vérification du préfixe
+    if prefix ~= "Keyzerfree" and prefix ~= "Keyzervip" then
+        return false, "Invalid Prefix (free/vip)"
     end
     
-    if uppers < 3 then 
-        return false, "Need 3+ Uppercases in key" 
+    -- 2. Vérification longueur (35 caractères après le _)
+    if #keyBody ~= 35 then 
+        return false, "Body must be 35 chars (Current: "..#keyBody..")" 
     end
+
+    -- 3. Comptage Majuscules et Chiffres
+    local uppers, digits = 0, 0
+    for i = 1, #keyBody do
+        local char = keyBody:sub(i,i)
+        if char:match("%u") then uppers = uppers + 1 end
+        if char:match("%d") then digits = digits + 1 end
+    end
+    
+    if uppers < 4 then return false, "Need 4+ Uppercases" end
+    if digits < 16 then return false, "Need 16+ Digits" end
 
     return true, prefix
 end
 
---// GUI CONSTRUCTION
+--// GUI PRINCIPAL
 local gui = Instance.new("ScreenGui", game.CoreGui)
 local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(0, 400, 0, 320)
-main.Position = UDim2.new(0.5, -200, 0.5, -160)
+main.Size = UDim2.new(0, 360, 0, 280)
+main.Position = UDim2.new(0.5, -180, 0.5, -140)
 main.BackgroundColor3 = Color3.new(0, 0, 0) -- FULL BLACK
 main.BorderSizePixel = 0
 Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
@@ -71,140 +76,129 @@ close.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 close.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", close)
 
--- CONTENEURS
+-- PAGES
 local loginPage = Instance.new("Frame", main)
 loginPage.Size = UDim2.new(1, 0, 1, -45)
 loginPage.Position = UDim2.new(0, 0, 0, 45)
 loginPage.BackgroundTransparency = 1
 
-local farmPage = loginPage:Clone()
-farmPage.Parent = main
+local farmPage = Instance.new("Frame", main)
+farmPage.Size = UDim2.new(1, 0, 1, -45)
+farmPage.Position = UDim2.new(0, 0, 0, 45)
+farmPage.BackgroundTransparency = 1
 farmPage.Visible = false
 
--- LOGIN UI
+-- UI LOGIN
 local keyBox = Instance.new("TextBox", loginPage)
-keyBox.Size = UDim2.new(0, 340, 0, 50)
-keyBox.Position = UDim2.new(0.5, -170, 0.1, 0)
-keyBox.PlaceholderText = "Paste your 50-char key here..."
+keyBox.Size = UDim2.new(0, 300, 0, 45)
+keyBox.Position = UDim2.new(0.5, -150, 0.1, 0)
+keyBox.PlaceholderText = "Insert your key..."
 keyBox.Text = ""
 keyBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 keyBox.TextColor3 = Color3.new(1, 1, 1)
-keyBox.ClearTextOnFocus = false
 Instance.new("UICorner", keyBox)
 
 local vBtn = Instance.new("TextButton", loginPage)
-vBtn.Size = UDim2.new(0, 220, 0, 45)
-vBtn.Position = UDim2.new(0.5, -110, 0.4, 0)
-vBtn.Text = "Validate Access"
+vBtn.Size = UDim2.new(0, 200, 0, 45)
+vBtn.Position = UDim2.new(0.5, -100, 0.4, 0)
+vBtn.Text = "Validate"
 vBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 vBtn.TextColor3 = Color3.new(1, 1, 1)
-vBtn.Font = Enum.Font.GothamBold
 Instance.new("UICorner", vBtn)
 
 local dBtn = Instance.new("TextButton", loginPage)
-dBtn.Size = UDim2.new(0, 340, 0, 45)
-dBtn.Position = UDim2.new(0.5, -170, 0.8, 0)
-dBtn.Text = "Get Key on Discord"
+dBtn.Size = UDim2.new(1, 0, 0, 40)
+dBtn.Position = UDim2.new(0, 0, 0.85, 0)
+dBtn.Text = "Discord (Get Key)"
 dBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
 dBtn.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", dBtn)
 
--- --- LOGIQUE BOUTONS ---
-dBtn.MouseButton1Click:Connect(function()
-    setclipboard(DISCORD_LINK)
-    dBtn.Text = "Link Copied!"
-    task.wait(2)
-    dBtn.Text = "Get Key on Discord"
-end)
-
+-- --- VALIDATION ---
 vBtn.MouseButton1Click:Connect(function()
-    local success, result = validateKey(keyBox.Text)
+    local success, prefix = validateStructure(keyBox.Text)
     if success then
-        IsVIP = (result == "Keyzervip")
+        IsVIP = (prefix == "Keyzervip")
         AccessGranted = true
         SessionStartTime = tick()
-        
         vBtn.Text = "Welcome " .. LocalPlayer.Name .. (IsVIP and " [🌟]" or "")
         vBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-        
         task.wait(1.5)
         loginPage.Visible = false
         farmPage.Visible = true
     else
-        vBtn.Text = result
-        vBtn.TextSize = 12
+        vBtn.Text = prefix
         task.wait(2)
-        vBtn.Text = "Validate Access"
-        vBtn.TextSize = 18
+        vBtn.Text = "Validate"
     end
 end)
 
--- --- ESP & FARM (DANS LE PANEL) ---
+dBtn.MouseButton1Click:Connect(function()
+    if setclipboard then setclipboard(DISCORD_LINK) end
+    dBtn.Text = "Link Copied!"
+    task.wait(1)
+    dBtn.Text = "Discord (Get Key)"
+end)
+
+-- --- PAGE FARM ---
 local farmToggle = Instance.new("TextButton", farmPage)
 farmToggle.Size = UDim2.new(0, 250, 0, 50)
-farmToggle.Position = UDim2.new(0.5, -125, 0.1, 0)
+farmToggle.Position = UDim2.new(0.5, -125, 0.15, 0)
 farmToggle.Text = "Auto-Farm: OFF"
 farmToggle.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 farmToggle.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", farmToggle)
 
+local lowG = Instance.new("TextButton", farmPage)
+lowG.Size = UDim2.new(0, 250, 0, 50)
+lowG.Position = UDim2.new(0.5, -125, 0.5, 0)
+lowG.Text = "Low Graphics"
+lowG.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+lowG.TextColor3 = Color3.new(1, 1, 1)
+Instance.new("UICorner", lowG)
+
+-- LOGIQUE AUTO FARM
 farmToggle.MouseButton1Click:Connect(function()
     AutoFarmEnabled = not AutoFarmEnabled
     farmToggle.Text = "Auto-Farm: " .. (AutoFarmEnabled and "ON" or "OFF")
     farmToggle.BackgroundColor3 = AutoFarmEnabled and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(200, 0, 0)
-    
-    -- ESP ACTIF DES QU'ON LANCE L'AUTOFARM
-    if AutoFarmEnabled then
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character then
-                local h = Instance.new("Highlight", p.Character)
-                h.FillTransparency = 0.5
-                task.spawn(function()
-                    while h.Parent do
-                        if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then
-                            h.FillColor = Color3.new(1, 0, 0) -- RED
-                        elseif p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun") then
-                            h.FillColor = Color3.new(0, 0, 1) -- BLUE
-                        else
-                            h.FillColor = Color3.new(0, 1, 0) -- GREEN
-                        end
-                        task.wait(1)
-                    end
-                end)
-            end
-        end
-    end
 end)
 
--- AUTO-FARM LOOP
 task.spawn(function()
-    while true do
-        task.wait(FarmSpeed)
+    while task.wait(0.8) do
         if AutoFarmEnabled and AccessGranted then
-            local container = workspace:FindFirstChild("CoinContainer", true)
-            if container then
-                local coin = container:GetChildren()[11] or container:FindFirstChildWhichIsA("BasePart")
+            pcall(function()
+                local coin = workspace:FindFirstChild("CoinContainer", true)
                 if coin then
-                    LocalPlayer.Character:SetPrimaryPartCFrame(coin.CFrame)
+                    local target = coin:FindFirstChildWhichIsA("BasePart")
+                    if target then
+                        LocalPlayer.Character:SetPrimaryPartCFrame(target.CFrame)
+                    end
                 end
-            end
+            end)
         end
     end
 end)
 
--- TIMER SESSION (STANDARD)
+lowG.MouseButton1Click:Connect(function()
+    settings().Rendering.QualityLevel = 1
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") then v.Material = Enum.Material.SmoothPlastic end
+    end
+    lowG.Text = "Graphics: LOW"
+end)
+
+-- TIMER (5 MIN FREE)
 task.spawn(function()
     while task.wait(1) do
         if AccessGranted and not IsVIP then
-            if tick() - SessionStartTime >= 300 then
-                gui:Destroy()
-            end
+            if tick() - SessionStartTime >= 300 then gui:Destroy() end
         end
     end
 end)
 
 close.MouseButton1Click:Connect(function() gui:Destroy() end)
--- DRAG SYSTEM
+-- DRAG
 local d, ds, sp
 top.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then d = true ds = i.Position sp = main.Position end end)
 UIS.InputChanged:Connect(function(i) if d and i.UserInputType == Enum.UserInputType.MouseMovement then local delta = i.Position - ds main.Position = UDim2.new(sp.X.Scale, sp.X.Offset + delta.X, sp.Y.Scale, sp.Y.Offset + delta.Y) end end)
