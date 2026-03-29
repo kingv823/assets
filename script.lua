@@ -6,14 +6,15 @@ local LocalPlayer = Players.LocalPlayer
 local DISCORD_LINK = "https://discord.gg/G2KKtYjxcD"
 
 local AccessGranted = false
-local AutoFarmEnabled = false
+local MasterToggle = false
 
 --// MAIN GUI
 local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "KeyzerHub_Final"
 local main = Instance.new("Frame", gui)
 main.Size = UDim2.new(0, 360, 0, 300)
 main.Position = UDim2.new(0.5, -180, 0.5, -150)
-main.BackgroundColor3 = Color3.new(0, 0, 0) -- FULL BLACK
+main.BackgroundColor3 = Color3.new(0, 0, 0)
 main.BorderSizePixel = 0
 Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
 
@@ -38,6 +39,7 @@ close.Position = UDim2.new(1, -38, 0, 7)
 close.Text = "X"
 close.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 close.TextColor3 = Color3.new(1, 1, 1)
+close.Font = Enum.Font.GothamBold
 Instance.new("UICorner", close)
 
 --// PAGES
@@ -52,11 +54,11 @@ farmPage.Position = UDim2.new(0, 0, 0, 45)
 farmPage.BackgroundTransparency = 1
 farmPage.Visible = false
 
---// LOGIN UI (KEY HIDDEN)
+--// LOGIN UI
 local keyBox = Instance.new("TextBox", loginPage)
 keyBox.Size = UDim2.new(0, 300, 0, 45)
 keyBox.Position = UDim2.new(0.5, -150, 0.15, 0)
-keyBox.PlaceholderText = "Paste your key here..."
+keyBox.PlaceholderText = "Paste key here..."
 keyBox.Text = ""
 keyBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 keyBox.TextColor3 = Color3.new(1, 1, 1)
@@ -79,22 +81,50 @@ dBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
 dBtn.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", dBtn)
 
---// VALIDATION LOGIC
+--// FUNCTIONS
+local function applyLowGraphics()
+    settings().Rendering.QualityLevel = 1
+    for _, v in pairs(game:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.Material = Enum.Material.SmoothPlastic
+        elseif v:IsA("Decal") or v:IsA("Texture") then
+            v.Transparency = 1
+        end
+    end
+end
+
+local function applyESP()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            local hl = p.Character:FindFirstChild("KeyzerHighlight") or Instance.new("Highlight", p.Character)
+            hl.Name = "KeyzerHighlight"
+            task.spawn(function()
+                while hl.Parent and MasterToggle do
+                    if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then
+                        hl.FillColor = Color3.new(1, 0, 0)
+                    elseif p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun") then
+                        hl.FillColor = Color3.new(0, 0, 1)
+                    else
+                        hl.FillColor = Color3.new(0, 1, 0)
+                    end
+                    task.wait(1)
+                end
+                if not MasterToggle then hl:Destroy() end
+            end)
+        end
+    end
+end
+
+--// BUTTON EVENTS
 vBtn.MouseButton1Click:Connect(function()
-    local input = keyBox.Text:gsub("%s+", "") -- Remove spaces
-    if input == "Keyzerhub_404" then
+    if keyBox.Text:gsub("%s+", "") == "Keyzerhub_404" then
         AccessGranted = true
-        vBtn.Text = "SUCCESS!"
-        vBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
-        task.wait(1)
         loginPage.Visible = false
         farmPage.Visible = true
     else
         vBtn.Text = "WRONG KEY"
-        vBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
         task.wait(1)
         vBtn.Text = "VALIDATE"
-        vBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
     end
 end)
 
@@ -105,37 +135,41 @@ dBtn.MouseButton1Click:Connect(function()
     dBtn.Text = "GET KEY (DISCORD)"
 end)
 
---// FARM PAGE CONTENT
-local farmToggle = Instance.new("TextButton", farmPage)
-farmToggle.Size = UDim2.new(0, 250, 0, 55)
-farmToggle.Position = UDim2.new(0.5, -125, 0.2, 0)
-farmToggle.Text = "AUTO-FARM: OFF"
-farmToggle.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-farmToggle.TextColor3 = Color3.new(1, 1, 1)
-farmToggle.Font = Enum.Font.GothamBold
-Instance.new("UICorner", farmToggle)
+local mainBtn = Instance.new("TextButton", farmPage)
+mainBtn.Size = UDim2.new(0, 280, 0, 60)
+mainBtn.Position = UDim2.new(0.5, -140, 0.35, 0)
+mainBtn.Text = "START ALL: OFF"
+mainBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+mainBtn.TextColor3 = Color3.new(1, 1, 1)
+mainBtn.Font = Enum.Font.GothamBold
+mainBtn.TextSize = 18
+Instance.new("UICorner", mainBtn)
 
-farmToggle.MouseButton1Click:Connect(function()
-    AutoFarmEnabled = not AutoFarmEnabled
-    farmToggle.Text = "AUTO-FARM: " .. (AutoFarmEnabled and "ON" or "OFF")
-    farmToggle.BackgroundColor3 = AutoFarmEnabled and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(200, 0, 0)
+mainBtn.MouseButton1Click:Connect(function()
+    MasterToggle = not MasterToggle
+    if MasterToggle then
+        mainBtn.Text = "START ALL: ON"
+        mainBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+        applyLowGraphics()
+        applyESP()
+    else
+        mainBtn.Text = "START ALL: OFF"
+        mainBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+    end
 end)
 
---// AUTO-FARM MM2 (PATCHED & FAST)
+--// FARM LOOP
 task.spawn(function()
-    while task.wait(0.6) do
-        if AutoFarmEnabled and AccessGranted then
+    while task.wait(0.5) do
+        if not gui or not gui.Parent then break end
+        if MasterToggle and AccessGranted then
             pcall(function()
-                local char = LocalPlayer.Character
-                if char and char:FindFirstChild("HumanoidRootPart") then
-                    -- Search for CoinContainer in the map
-                    local container = workspace:FindFirstChild("CoinContainer", true)
-                    if container then
-                        local coin = container:FindFirstChildWhichIsA("BasePart")
-                        if coin then
-                            coin.Color = Color3.fromRGB(255, 0, 0) -- Turn coin red as requested
-                            char.HumanoidRootPart.CFrame = coin.CFrame
-                        end
+                local coin = workspace:FindFirstChild("CoinContainer", true)
+                if coin then
+                    local target = coin:FindFirstChildWhichIsA("BasePart")
+                    if target then
+                        target.Color = Color3.new(1, 0, 0)
+                        LocalPlayer.Character.HumanoidRootPart.CFrame = target.CFrame
                     end
                 end
             end)
@@ -143,7 +177,12 @@ task.spawn(function()
     end
 end)
 
-close.MouseButton1Click:Connect(function() gui:Destroy() end)
+--// TOTAL CLOSE (DESTROYS EVERYTHING)
+close.MouseButton1Click:Connect(function()
+    MasterToggle = false
+    AccessGranted = false
+    gui:Destroy() -- Removes everything from game.CoreGui
+end)
 
 --// DRAG SYSTEM
 local d, ds, sp
