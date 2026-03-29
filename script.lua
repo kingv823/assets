@@ -1,24 +1,50 @@
+--// SERVICES
+local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
+local MM2_ID = 142823291
 local LocalPlayer = Players.LocalPlayer
 local DISCORD_LINK = "https://discord.gg/G2KKtYjxcD"
 
+--// 1. AUTO-GAME CHECK & TP
+if game.PlaceId ~= MM2_ID then
+    -- Simple Notification
+    local screen = Instance.new("ScreenGui", game.CoreGui)
+    local frame = Instance.new("Frame", screen)
+    frame.Size = UDim2.new(0, 300, 0, 80)
+    frame.Position = UDim2.new(0.5, -150, 0.5, -40)
+    frame.BackgroundColor3 = Color3.new(0, 0, 0)
+    Instance.new("UICorner", frame)
+    
+    local txt = Instance.new("TextLabel", frame)
+    txt.Size = UDim2.new(1, 0, 1, 0)
+    txt.Text = "WRONG GAME!\nJoining Murder Mystery 2..."
+    txt.TextColor3 = Color3.new(1, 1, 1)
+    txt.Font = Enum.Font.GothamBold
+    txt.BackgroundTransparency = 1
+    
+    task.wait(2)
+    TeleportService:Teleport(MM2_ID, LocalPlayer)
+    return
+end
+
+--// 2. SCRIPT STATE
 local AccessGranted = false
 local MasterToggle = false
 
---// MAIN GUI
+--// 3. UI CONSTRUCTION
 local gui = Instance.new("ScreenGui", game.CoreGui)
-gui.Name = "KeyzerHub_Final"
+gui.Name = "KeyzerHub_Official"
 local main = Instance.new("Frame", gui)
 main.Size = UDim2.new(0, 360, 0, 300)
 main.Position = UDim2.new(0.5, -180, 0.5, -150)
 main.BackgroundColor3 = Color3.new(0, 0, 0)
 main.BorderSizePixel = 0
-Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", main)
 
---// TOPBAR
+-- Topbar
 local top = Instance.new("Frame", main)
 top.Size = UDim2.new(1, 0, 0, 45)
 top.BackgroundTransparency = 1
@@ -39,10 +65,9 @@ close.Position = UDim2.new(1, -38, 0, 7)
 close.Text = "X"
 close.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 close.TextColor3 = Color3.new(1, 1, 1)
-close.Font = Enum.Font.GothamBold
 Instance.new("UICorner", close)
 
---// PAGES
+-- Pages
 local loginPage = Instance.new("Frame", main)
 loginPage.Size = UDim2.new(1, 0, 1, -45)
 loginPage.Position = UDim2.new(0, 0, 0, 45)
@@ -54,12 +79,11 @@ farmPage.Position = UDim2.new(0, 0, 0, 45)
 farmPage.BackgroundTransparency = 1
 farmPage.Visible = false
 
---// LOGIN UI
+-- Login UI
 local keyBox = Instance.new("TextBox", loginPage)
 keyBox.Size = UDim2.new(0, 300, 0, 45)
 keyBox.Position = UDim2.new(0.5, -150, 0.15, 0)
 keyBox.PlaceholderText = "Paste key here..."
-keyBox.Text = ""
 keyBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 keyBox.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", keyBox)
@@ -70,7 +94,6 @@ vBtn.Position = UDim2.new(0.5, -100, 0.45, 0)
 vBtn.Text = "VALIDATE"
 vBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 vBtn.TextColor3 = Color3.new(1, 1, 1)
-vBtn.Font = Enum.Font.GothamBold
 Instance.new("UICorner", vBtn)
 
 local dBtn = Instance.new("TextButton", loginPage)
@@ -81,15 +104,11 @@ dBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
 dBtn.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", dBtn)
 
---// FUNCTIONS
+--// 4. FUNCTIONS
 local function applyLowGraphics()
     settings().Rendering.QualityLevel = 1
-    for _, v in pairs(game:GetDescendants()) do
-        if v:IsA("BasePart") then
-            v.Material = Enum.Material.SmoothPlastic
-        elseif v:IsA("Decal") or v:IsA("Texture") then
-            v.Transparency = 1
-        end
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") then v.Material = Enum.Material.SmoothPlastic end
     end
 end
 
@@ -101,11 +120,11 @@ local function applyESP()
             task.spawn(function()
                 while hl.Parent and MasterToggle do
                     if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then
-                        hl.FillColor = Color3.new(1, 0, 0)
+                        hl.FillColor = Color3.fromRGB(255, 0, 0) -- Murderer
                     elseif p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun") then
-                        hl.FillColor = Color3.new(0, 0, 1)
+                        hl.FillColor = Color3.fromRGB(0, 0, 255) -- Sheriff
                     else
-                        hl.FillColor = Color3.new(0, 1, 0)
+                        hl.FillColor = Color3.fromRGB(0, 255, 0) -- Innocent
                     end
                     task.wait(1)
                 end
@@ -115,7 +134,7 @@ local function applyESP()
     end
 end
 
---// BUTTON EVENTS
+--// 5. INTERACTION LOGIC
 vBtn.MouseButton1Click:Connect(function()
     if keyBox.Text:gsub("%s+", "") == "Keyzerhub_404" then
         AccessGranted = true
@@ -142,7 +161,6 @@ mainBtn.Text = "START ALL: OFF"
 mainBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 mainBtn.TextColor3 = Color3.new(1, 1, 1)
 mainBtn.Font = Enum.Font.GothamBold
-mainBtn.TextSize = 18
 Instance.new("UICorner", mainBtn)
 
 mainBtn.MouseButton1Click:Connect(function()
@@ -158,18 +176,18 @@ mainBtn.MouseButton1Click:Connect(function()
     end
 end)
 
---// FARM LOOP
+--// 6. MAIN LOOP (FARM)
 task.spawn(function()
     while task.wait(0.5) do
-        if not gui or not gui.Parent then break end
+        if not gui.Parent then break end
         if MasterToggle and AccessGranted then
             pcall(function()
-                local coin = workspace:FindFirstChild("CoinContainer", true)
-                if coin then
-                    local target = coin:FindFirstChildWhichIsA("BasePart")
-                    if target then
-                        target.Color = Color3.new(1, 0, 0)
-                        LocalPlayer.Character.HumanoidRootPart.CFrame = target.CFrame
+                local coinContainer = workspace:FindFirstChild("CoinContainer", true)
+                if coinContainer then
+                    local coin = coinContainer:FindFirstChildWhichIsA("BasePart")
+                    if coin then
+                        coin.Color = Color3.new(1, 0, 0)
+                        LocalPlayer.Character.HumanoidRootPart.CFrame = coin.CFrame
                     end
                 end
             end)
@@ -177,14 +195,13 @@ task.spawn(function()
     end
 end)
 
---// TOTAL CLOSE (DESTROYS EVERYTHING)
+--// 7. CLEANUP ON CLOSE
 close.MouseButton1Click:Connect(function()
     MasterToggle = false
-    AccessGranted = false
-    gui:Destroy() -- Removes everything from game.CoreGui
+    gui:Destroy()
 end)
 
---// DRAG SYSTEM
+--// 8. DRAG SYSTEM
 local d, ds, sp
 top.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then d = true ds = i.Position sp = main.Position end end)
 UIS.InputChanged:Connect(function(i) if d and i.UserInputType == Enum.UserInputType.MouseMovement then local delta = i.Position - ds main.Position = UDim2.new(sp.X.Scale, sp.X.Offset + delta.X, sp.Y.Scale, sp.Y.Offset + delta.Y) end end)
