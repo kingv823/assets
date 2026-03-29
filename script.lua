@@ -44,23 +44,22 @@ end
 --// GUI
 local gui = Instance.new("ScreenGui", game.CoreGui)
 
--- MAIN
 local main = Instance.new("Frame", gui)
 main.Size = UDim2.new(0, 360, 0, 240)
 main.Position = UDim2.new(0.5,-180,0.5,-120)
-main.BackgroundColor3 = Color3.fromRGB(20,0,0)
-main.BackgroundTransparency = 1
+main.BackgroundColor3 = Color3.fromRGB(15,25,45)
 
 Instance.new("UICorner", main).CornerRadius = UDim.new(0,12)
 
--- GRADIENT ROUGE
+-- 🔵 GRADIENT BLEU
 local gradient = Instance.new("UIGradient", main)
 gradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(180,0,0)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(60,0,0))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(0,120,255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0,60,180))
 }
 
 -- FADE IN
+main.BackgroundTransparency = 1
 TweenService:Create(main, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
 
 -- TOPBAR
@@ -82,7 +81,7 @@ local close = Instance.new("TextButton", top)
 close.Size = UDim2.new(0,30,0,30)
 close.Position = UDim2.new(1,-35,0,5)
 close.Text = "✕"
-close.BackgroundColor3 = Color3.fromRGB(255,50,50)
+close.BackgroundColor3 = Color3.fromRGB(255,80,80)
 Instance.new("UICorner", close)
 
 -- MINIMIZE
@@ -90,47 +89,47 @@ local mini = Instance.new("TextButton", top)
 mini.Size = UDim2.new(0,30,0,30)
 mini.Position = UDim2.new(1,-70,0,5)
 mini.Text = "—"
-mini.BackgroundColor3 = Color3.fromRGB(200,0,0)
+mini.BackgroundColor3 = Color3.fromRGB(0,100,255)
 Instance.new("UICorner", mini)
 
--- KEY UI
+-- KEY BOX
 local keyBox = Instance.new("TextBox", main)
 keyBox.Size = UDim2.new(0,260,0,45)
 keyBox.Position = UDim2.new(0.5,-130,0.4,0)
-keyBox.PlaceholderText = "Enter your key..."
-keyBox.BackgroundColor3 = Color3.fromRGB(30,0,0)
+keyBox.PlaceholderText = "Enter your key here..."
+keyBox.BackgroundColor3 = Color3.fromRGB(20,40,80)
 keyBox.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", keyBox)
 
+-- BUTTON
 local keyBtn = Instance.new("TextButton", main)
 keyBtn.Size = UDim2.new(0,220,0,45)
 keyBtn.Position = UDim2.new(0.5,-110,0.7,0)
 keyBtn.Text = "Validate"
-keyBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
+keyBtn.BackgroundColor3 = Color3.fromRGB(0,140,255)
 keyBtn.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", keyBtn)
 
--- HOVER ANIMATION
+-- HOVER
 keyBtn.MouseEnter:Connect(function()
-    TweenService:Create(keyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255,0,0)}):Play()
+    TweenService:Create(keyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0,170,255)}):Play()
 end)
 
 keyBtn.MouseLeave:Connect(function()
-    TweenService:Create(keyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200,0,0)}):Play()
+    TweenService:Create(keyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0,140,255)}):Play()
 end)
 
 -- STATUS
 local status = Instance.new("TextLabel", main)
 status.Size = UDim2.new(1,0,0,30)
 status.Position = UDim2.new(0,0,0.85,0)
-status.Text = ""
 status.BackgroundTransparency = 1
 status.TextColor3 = Color3.new(1,1,1)
 
 -- WELCOME
 local welcome = main:Clone()
-welcome.Visible = false
 welcome.Parent = gui
+welcome.Visible = false
 
 local avatar = Instance.new("ImageLabel", welcome)
 avatar.Size = UDim2.new(0,80,0,80)
@@ -147,7 +146,7 @@ local cont = Instance.new("TextButton", welcome)
 cont.Size = UDim2.new(0,200,0,40)
 cont.Position = UDim2.new(0.5,-100,0.8,0)
 cont.Text = "Continue"
-cont.BackgroundColor3 = Color3.fromRGB(200,0,0)
+cont.BackgroundColor3 = Color3.fromRGB(0,140,255)
 Instance.new("UICorner", cont)
 
 -- PANEL
@@ -161,7 +160,7 @@ local start = Instance.new("TextButton", panel)
 start.Size = UDim2.new(0,240,0,55)
 start.Position = UDim2.new(0.5,-120,0.3,0)
 start.Text = "Start Auto Farm"
-start.BackgroundColor3 = Color3.fromRGB(220,0,0)
+start.BackgroundColor3 = Color3.fromRGB(0,150,255)
 start.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", start)
 
@@ -234,7 +233,7 @@ UIS.InputEnded:Connect(function(i)
     end
 end)
 
--- MINIMIZE ANIM
+-- MINIMIZE
 local minimized = false
 mini.MouseButton1Click:Connect(function()
     minimized = not minimized
