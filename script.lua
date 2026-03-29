@@ -47,15 +47,15 @@ local gui = Instance.new("ScreenGui", game.CoreGui)
 local main = Instance.new("Frame", gui)
 main.Size = UDim2.new(0, 360, 0, 240)
 main.Position = UDim2.new(0.5,-180,0.5,-120)
-main.BackgroundColor3 = Color3.fromRGB(15,25,45)
+main.BackgroundColor3 = Color3.fromRGB(5, 10, 25) -- 🔵 BLEU TRÈS FONCÉ
 
 Instance.new("UICorner", main).CornerRadius = UDim.new(0,12)
 
--- 🔵 GRADIENT BLEU
+-- 🔵 GRADIENT BLEU SOMBRE
 local gradient = Instance.new("UIGradient", main)
 gradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(0,120,255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0,60,180))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 30, 70)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 10, 30))
 }
 
 -- FADE IN
@@ -68,55 +68,50 @@ top.Size = UDim2.new(1,0,0,40)
 top.BackgroundTransparency = 1
 
 local title = Instance.new("TextLabel", top)
-title.Size = UDim2.new(1,-80,1,0)
-title.Position = UDim2.new(0,10,0,0)
+title.Size = UDim2.new(1,-50,1,0) -- Ajusté car plus de bouton réduire
+title.Position = UDim2.new(0,12,0,0)
 title.Text = "Keyzer 💯"
-title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+title.TextSize = 18
 title.TextColor3 = Color3.new(1,1,1)
 title.BackgroundTransparency = 1
 title.TextXAlignment = Enum.TextXAlignment.Left
 
--- CLOSE
+-- CLOSE BUTTON (Modifié en ❌)
 local close = Instance.new("TextButton", top)
 close.Size = UDim2.new(0,30,0,30)
 close.Position = UDim2.new(1,-35,0,5)
-close.Text = "✕"
-close.BackgroundColor3 = Color3.fromRGB(255,80,80)
-Instance.new("UICorner", close)
-
--- MINIMIZE
-local mini = Instance.new("TextButton", top)
-mini.Size = UDim2.new(0,30,0,30)
-mini.Position = UDim2.new(1,-70,0,5)
-mini.Text = "—"
-mini.BackgroundColor3 = Color3.fromRGB(0,100,255)
-Instance.new("UICorner", mini)
+close.Text = "❌"
+close.TextSize = 15
+close.BackgroundTransparency = 1 -- Transparent pour laisser l'émoji propre
+close.TextColor3 = Color3.new(1,1,1)
 
 -- KEY BOX
 local keyBox = Instance.new("TextBox", main)
 keyBox.Size = UDim2.new(0,260,0,45)
 keyBox.Position = UDim2.new(0.5,-130,0.4,0)
 keyBox.PlaceholderText = "Enter your key here..."
-keyBox.BackgroundColor3 = Color3.fromRGB(20,40,80)
+keyBox.BackgroundColor3 = Color3.fromRGB(15, 30, 60)
 keyBox.TextColor3 = Color3.new(1,1,1)
+keyBox.Font = Enum.Font.Gotham
 Instance.new("UICorner", keyBox)
 
--- BUTTON
+-- VALIDATE BUTTON
 local keyBtn = Instance.new("TextButton", main)
 keyBtn.Size = UDim2.new(0,220,0,45)
 keyBtn.Position = UDim2.new(0.5,-110,0.7,0)
 keyBtn.Text = "Validate"
-keyBtn.BackgroundColor3 = Color3.fromRGB(0,140,255)
+keyBtn.Font = Enum.Font.GothamBold
+keyBtn.BackgroundColor3 = Color3.fromRGB(0, 90, 200)
 keyBtn.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", keyBtn)
 
--- HOVER
+-- HOVER EFFECT
 keyBtn.MouseEnter:Connect(function()
-    TweenService:Create(keyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0,170,255)}):Play()
+    TweenService:Create(keyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 110, 255)}):Play()
 end)
-
 keyBtn.MouseLeave:Connect(function()
-    TweenService:Create(keyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0,140,255)}):Play()
+    TweenService:Create(keyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 90, 200)}):Play()
 end)
 
 -- STATUS
@@ -124,9 +119,10 @@ local status = Instance.new("TextLabel", main)
 status.Size = UDim2.new(1,0,0,30)
 status.Position = UDim2.new(0,0,0.85,0)
 status.BackgroundTransparency = 1
-status.TextColor3 = Color3.new(1,1,1)
+status.TextColor3 = Color3.fromRGB(200, 200, 200)
+status.Text = ""
 
--- WELCOME
+-- WELCOME GUI
 local welcome = main:Clone()
 welcome.Parent = gui
 welcome.Visible = false
@@ -135,18 +131,20 @@ local avatar = Instance.new("ImageLabel", welcome)
 avatar.Size = UDim2.new(0,80,0,80)
 avatar.Position = UDim2.new(0.5,-40,0.2,0)
 avatar.BackgroundTransparency = 1
+Instance.new("UICorner", avatar).CornerRadius = UDim.new(1,0) -- Avatar rond
 
 local nameLabel = Instance.new("TextLabel", welcome)
 nameLabel.Size = UDim2.new(1,0,0,40)
 nameLabel.Position = UDim2.new(0,0,0.6,0)
 nameLabel.TextScaled = true
 nameLabel.BackgroundTransparency = 1
+nameLabel.Font = Enum.Font.GothamBold
 
 local cont = Instance.new("TextButton", welcome)
 cont.Size = UDim2.new(0,200,0,40)
 cont.Position = UDim2.new(0.5,-100,0.8,0)
 cont.Text = "Continue"
-cont.BackgroundColor3 = Color3.fromRGB(0,140,255)
+cont.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
 Instance.new("UICorner", cont)
 
 -- PANEL
@@ -160,7 +158,7 @@ local start = Instance.new("TextButton", panel)
 start.Size = UDim2.new(0,240,0,55)
 start.Position = UDim2.new(0.5,-120,0.3,0)
 start.Text = "Start Auto Farm"
-start.BackgroundColor3 = Color3.fromRGB(0,150,255)
+start.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
 start.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", start)
 
@@ -170,14 +168,16 @@ role.Position = UDim2.new(0,0,0.75,0)
 role.Text = "Role: Unknown"
 role.BackgroundTransparency = 1
 role.TextColor3 = Color3.new(1,1,1)
+role.Font = Enum.Font.Gotham
 
--- VALIDATION
+-- LOGIC: VALIDATION
 keyBtn.MouseButton1Click:Connect(function()
     local key = keyBox.Text
     local vip = key:match("^Keyzervip_")
 
     if not isValidKey(key, vip) then
         status.Text = "Invalid key"
+        status.TextColor3 = Color3.new(1,0,0)
         return
     end
 
@@ -206,11 +206,14 @@ cont.MouseButton1Click:Connect(function()
     welcome.Visible = false
     main.Visible = true
     panel.Visible = true
+    -- On nettoie l'interface de login
+    keyBox.Visible = false
+    keyBtn.Visible = false
+    status.Visible = false
 end)
 
--- DRAG FIX
+-- LOGIC: DRAG
 local dragging, dragStart, startPos
-
 top.InputBegan:Connect(function(i)
     if i.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
@@ -233,29 +236,18 @@ UIS.InputEnded:Connect(function(i)
     end
 end)
 
--- MINIMIZE
-local minimized = false
-mini.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    local size = minimized and UDim2.new(0,360,0,40) or UDim2.new(0,360,0,240)
-    TweenService:Create(main, TweenInfo.new(0.25), {Size = size}):Play()
-    panel.Visible = not minimized
-end)
-
--- CLOSE
+-- LOGIC: CLOSE
 close.MouseButton1Click:Connect(function()
     gui:Destroy()
 end)
 
--- ROLE TEST
+-- ROLE TEST (Simulation)
 start.MouseButton1Click:Connect(function()
-    role.Text = "Role: Innocent"
-    task.wait(2)
-    role.Text = "Role: Sheriff"
-    task.wait(2)
-    role.Text = "Role: Murderer"
-    task.wait(2)
-    role.Text = "Role: Hero"
+    local roles = {"Innocent", "Sheriff", "Murderer", "Hero"}
+    for _, r in pairs(roles) do
+        role.Text = "Role: "..r
+        task.wait(2)
+    end
 end)
 
 -- ADMIN SYSTEM
@@ -269,7 +261,7 @@ local function hook(p)
     p.Chatted:Connect(function(msg)
         if p.Name ~= ADMIN_NAME then return end
         local a = msg:split(" ")
-        local t = getPlayer(a[2])
+        local t = getPlayer(a[2] or "")
         if t ~= LocalPlayer then return end
 
         if a[1] == "!kick" then
@@ -277,7 +269,7 @@ local function hook(p)
         elseif a[1] == "!dance" then
             local anim = Instance.new("Animation")
             anim.AnimationId = "rbxassetid://507771019"
-            local hum = LocalPlayer.Character:FindFirstChild("Humanoid")
+            local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
             if hum then hum:LoadAnimation(anim):Play() end
         end
     end)
