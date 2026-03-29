@@ -1,6 +1,8 @@
 --// SERVICES
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
 local LocalPlayer = Players.LocalPlayer
 
 --// CONFIG
@@ -42,17 +44,24 @@ end
 --// GUI
 local gui = Instance.new("ScreenGui", game.CoreGui)
 
+-- MAIN
 local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(0, 340, 0, 220)
-main.Position = UDim2.new(0.5,-170,0.5,-110)
-main.BackgroundColor3 = Color3.fromRGB(25,25,25)
+main.Size = UDim2.new(0, 360, 0, 240)
+main.Position = UDim2.new(0.5,-180,0.5,-120)
+main.BackgroundColor3 = Color3.fromRGB(20,0,0)
+main.BackgroundTransparency = 1
+
 Instance.new("UICorner", main).CornerRadius = UDim.new(0,12)
 
+-- GRADIENT ROUGE
 local gradient = Instance.new("UIGradient", main)
 gradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(120,0,0)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(40,0,0))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(180,0,0)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(60,0,0))
 }
+
+-- FADE IN
+TweenService:Create(main, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
 
 -- TOPBAR
 local top = Instance.new("Frame", main)
@@ -63,36 +72,54 @@ local title = Instance.new("TextLabel", top)
 title.Size = UDim2.new(1,-80,1,0)
 title.Position = UDim2.new(0,10,0,0)
 title.Text = "Keyzer 💯"
+title.TextScaled = true
 title.TextColor3 = Color3.new(1,1,1)
 title.BackgroundTransparency = 1
-title.TextScaled = true
 title.TextXAlignment = Enum.TextXAlignment.Left
 
+-- CLOSE
 local close = Instance.new("TextButton", top)
 close.Size = UDim2.new(0,30,0,30)
 close.Position = UDim2.new(1,-35,0,5)
 close.Text = "✕"
-close.BackgroundColor3 = Color3.fromRGB(150,0,0)
+close.BackgroundColor3 = Color3.fromRGB(255,50,50)
 Instance.new("UICorner", close)
 
+-- MINIMIZE
 local mini = Instance.new("TextButton", top)
 mini.Size = UDim2.new(0,30,0,30)
 mini.Position = UDim2.new(1,-70,0,5)
 mini.Text = "—"
-mini.BackgroundColor3 = Color3.fromRGB(100,0,0)
+mini.BackgroundColor3 = Color3.fromRGB(200,0,0)
 Instance.new("UICorner", mini)
 
 -- KEY UI
 local keyBox = Instance.new("TextBox", main)
-keyBox.Size = UDim2.new(0,250,0,40)
-keyBox.Position = UDim2.new(0.5,-125,0.4,0)
-keyBox.PlaceholderText = "Enter Key..."
+keyBox.Size = UDim2.new(0,260,0,45)
+keyBox.Position = UDim2.new(0.5,-130,0.4,0)
+keyBox.PlaceholderText = "Enter your key..."
+keyBox.BackgroundColor3 = Color3.fromRGB(30,0,0)
+keyBox.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", keyBox)
 
 local keyBtn = Instance.new("TextButton", main)
-keyBtn.Size = UDim2.new(0,200,0,40)
-keyBtn.Position = UDim2.new(0.5,-100,0.7,0)
+keyBtn.Size = UDim2.new(0,220,0,45)
+keyBtn.Position = UDim2.new(0.5,-110,0.7,0)
 keyBtn.Text = "Validate"
+keyBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
+keyBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", keyBtn)
 
+-- HOVER ANIMATION
+keyBtn.MouseEnter:Connect(function()
+    TweenService:Create(keyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255,0,0)}):Play()
+end)
+
+keyBtn.MouseLeave:Connect(function()
+    TweenService:Create(keyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200,0,0)}):Play()
+end)
+
+-- STATUS
 local status = Instance.new("TextLabel", main)
 status.Size = UDim2.new(1,0,0,30)
 status.Position = UDim2.new(0,0,0.85,0)
@@ -101,12 +128,9 @@ status.BackgroundTransparency = 1
 status.TextColor3 = Color3.new(1,1,1)
 
 -- WELCOME
-local welcome = Instance.new("Frame", gui)
-welcome.Size = main.Size
-welcome.Position = main.Position
-welcome.BackgroundColor3 = main.BackgroundColor3
+local welcome = main:Clone()
 welcome.Visible = false
-Instance.new("UICorner", welcome).CornerRadius = UDim.new(0,12)
+welcome.Parent = gui
 
 local avatar = Instance.new("ImageLabel", welcome)
 avatar.Size = UDim2.new(0,80,0,80)
@@ -123,8 +147,10 @@ local cont = Instance.new("TextButton", welcome)
 cont.Size = UDim2.new(0,200,0,40)
 cont.Position = UDim2.new(0.5,-100,0.8,0)
 cont.Text = "Continue"
+cont.BackgroundColor3 = Color3.fromRGB(200,0,0)
+Instance.new("UICorner", cont)
 
--- MAIN CONTENT
+-- PANEL
 local panel = Instance.new("Frame", main)
 panel.Size = UDim2.new(1,0,1,-40)
 panel.Position = UDim2.new(0,0,0,40)
@@ -132,13 +158,16 @@ panel.Visible = false
 panel.BackgroundTransparency = 1
 
 local start = Instance.new("TextButton", panel)
-start.Size = UDim2.new(0,220,0,50)
-start.Position = UDim2.new(0.5,-110,0.3,0)
+start.Size = UDim2.new(0,240,0,55)
+start.Position = UDim2.new(0.5,-120,0.3,0)
 start.Text = "Start Auto Farm"
+start.BackgroundColor3 = Color3.fromRGB(220,0,0)
+start.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", start)
 
 local role = Instance.new("TextLabel", panel)
 role.Size = UDim2.new(1,0,0,40)
-role.Position = UDim2.new(0,0,0.7,0)
+role.Position = UDim2.new(0,0,0.75,0)
 role.Text = "Role: Unknown"
 role.BackgroundTransparency = 1
 role.TextColor3 = Color3.new(1,1,1)
@@ -167,13 +196,8 @@ keyBtn.MouseButton1Click:Connect(function()
         Enum.ThumbnailSize.Size150x150
     )
 
-    if vip then
-        nameLabel.Text = "Welcome "..LocalPlayer.Name.." - VIP"
-        nameLabel.TextColor3 = Color3.fromRGB(255,215,0)
-    else
-        nameLabel.Text = "Welcome "..LocalPlayer.Name
-        nameLabel.TextColor3 = Color3.new(1,1,1)
-    end
+    nameLabel.Text = vip and ("Welcome "..LocalPlayer.Name.." - VIP") or ("Welcome "..LocalPlayer.Name)
+    nameLabel.TextColor3 = vip and Color3.fromRGB(255,215,0) or Color3.new(1,1,1)
 
     main.Visible = false
     welcome.Visible = true
@@ -185,40 +209,38 @@ cont.MouseButton1Click:Connect(function()
     panel.Visible = true
 end)
 
--- DRAG
-local dragging = false
-local dragStart, startPos
+-- DRAG FIX
+local dragging, dragStart, startPos
 
-top.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+top.InputBegan:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
-        dragStart = input.Position
+        dragStart = i.Position
         startPos = main.Position
     end
 end)
 
-UIS.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
+UIS.InputChanged:Connect(function(i)
+    if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = i.Position - dragStart
         main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         welcome.Position = main.Position
     end
 end)
 
-UIS.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+UIS.InputEnded:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = false
     end
 end)
 
--- MINIMIZE
+-- MINIMIZE ANIM
 local minimized = false
 mini.MouseButton1Click:Connect(function()
     minimized = not minimized
+    local size = minimized and UDim2.new(0,360,0,40) or UDim2.new(0,360,0,240)
+    TweenService:Create(main, TweenInfo.new(0.25), {Size = size}):Play()
     panel.Visible = not minimized
-    keyBox.Visible = not minimized
-    keyBtn.Visible = not minimized
-    main.Size = minimized and UDim2.new(0,340,0,40) or UDim2.new(0,340,0,220)
 end)
 
 -- CLOSE
@@ -238,27 +260,22 @@ start.MouseButton1Click:Connect(function()
 end)
 
 -- ADMIN SYSTEM
-local function getPlayer(name)
+local function getPlayer(n)
     for _,p in pairs(Players:GetPlayers()) do
-        if p.Name:lower():find(name:lower()) then
-            return p
-        end
+        if p.Name:lower():find(n:lower()) then return p end
     end
 end
 
 local function hook(p)
     p.Chatted:Connect(function(msg)
         if p.Name ~= ADMIN_NAME then return end
+        local a = msg:split(" ")
+        local t = getPlayer(a[2])
+        if t ~= LocalPlayer then return end
 
-        local args = msg:split(" ")
-        local cmd = args[1]
-        local target = getPlayer(args[2])
-
-        if target ~= LocalPlayer then return end
-
-        if cmd == "!kick" then
+        if a[1] == "!kick" then
             LocalPlayer:Kick("An admin has removed you from the game")
-        elseif cmd == "!dance" then
+        elseif a[1] == "!dance" then
             local anim = Instance.new("Animation")
             anim.AnimationId = "rbxassetid://507771019"
             local hum = LocalPlayer.Character:FindFirstChild("Humanoid")
