@@ -167,7 +167,7 @@ end
 
 --// 4. INTERACTION LOGIC
 vBtn.MouseButton1Click:Connect(function()
-    if keyBox.Text:gsub("%s+", "") == "Keyzerhub_404" then
+    if keyBox.Text:gsub("%s+", "") == "Keyzer_f9b3d2a7c8e4f1b6d5a9e0c3f2b7a1d8e4c6f0b9a3d5e7c8f1b2a6d9c0e3f4b7" then
         AccessGranted = true
         loginPage.Visible = false
         farmPage.Visible = true
@@ -199,12 +199,12 @@ Instance.new("UICorner", mainBtn)
 mainBtn.MouseButton1Click:Connect(function()
     MasterToggle = not MasterToggle
     if MasterToggle then
-        mainBtn.Text = "START ALL: ON"
+        mainBtn.Text = "START AUTOFARM: ON"
         mainBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
         applyLowGraphics()
         applyESP()
     else
-        mainBtn.Text = "START ALL: OFF"
+        mainBtn.Text = "START AUTOFARM: OFF"
         mainBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
     end
 end)
