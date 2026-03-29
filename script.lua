@@ -1,169 +1,120 @@
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
-local ADMIN_NAME = "Nerx0ox"
-local MM2_PLACE_ID = 142823291
-
--- ❌ Si pas MM2
-if game.PlaceId ~= MM2_PLACE_ID then
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "Keyzer 💯",
-        Text = "are you lost ...?",
-        Duration = 5
-    })
-    return
-end
-
--- 🔑 KEY SYSTEM
-local activeKeys = {}
-
-local function isValidKey(key, isVIP)
-    if isVIP then
-        if not key:match("^Keyzervip_") then return false end
-    else
-        if not key:match("^Keyzer_") then return false end
-    end
-
-    if #key ~= 18 then return false end
-
-    local upper, lower, digit = 0,0,0
-
-    for c in key:gmatch(".") do
-        if c:match("%u") then upper += 1
-        elseif c:match("%l") then lower += 1
-        elseif c:match("%d") then digit += 1 end
-    end
-
-    return upper >= 3 and lower >= 5 and digit >= 2
-end
-
--- 🔴 GUI BASE
+-- 🔴 GUI PRINCIPAL
 local gui = Instance.new("ScreenGui", game.CoreGui)
 
--- 🔑 KEY FRAME
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 300, 0, 220)
-frame.Position = UDim2.new(0.5, -150, 0.5, -110)
-frame.BackgroundColor3 = Color3.fromRGB(120,0,0)
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0, 320, 0, 200)
+main.Position = UDim2.new(0.5, -160, 0.5, -100)
+main.BackgroundColor3 = Color3.fromRGB(90, 0, 0)
+main.BorderSizePixel = 0
 
-local title = Instance.new("TextLabel", frame)
-title.Size = UDim2.new(1,0,0,30)
+-- coins arrondis
+local uiCorner = Instance.new("UICorner", main)
+uiCorner.CornerRadius = UDim.new(0, 10)
+
+-- 🔝 TOP BAR
+local top = Instance.new("Frame", main)
+top.Size = UDim2.new(1, 0, 0, 35)
+top.BackgroundColor3 = Color3.fromRGB(120, 0, 0)
+top.BorderSizePixel = 0
+
+local topCorner = Instance.new("UICorner", top)
+topCorner.CornerRadius = UDim.new(0, 10)
+
+local title = Instance.new("TextLabel", top)
+title.Size = UDim2.new(1, -80, 1, 0)
+title.Position = UDim2.new(0, 10, 0, 0)
 title.Text = "Keyzer 💯"
 title.TextColor3 = Color3.new(1,1,1)
 title.BackgroundTransparency = 1
+title.TextXAlignment = Enum.TextXAlignment.Left
 
-local info = Instance.new("TextLabel", frame)
-info.Size = UDim2.new(1,0,0,30)
-info.Position = UDim2.new(0,0,0.15,0)
-info.Text = "This script is only made for Murder Mystery 2"
-info.TextScaled = true
-info.TextColor3 = Color3.new(1,1,1)
-info.BackgroundTransparency = 1
+-- ❌ CLOSE
+local close = Instance.new("TextButton", top)
+close.Size = UDim2.new(0, 30, 0, 30)
+close.Position = UDim2.new(1, -35, 0, 2)
+close.Text = "X"
+close.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
 
-local box = Instance.new("TextBox", frame)
-box.Size = UDim2.new(0,250,0,40)
-box.Position = UDim2.new(0.5,-125,0.35,0)
-box.PlaceholderText = "Enter key..."
+-- ➖ MINIMIZE
+local mini = Instance.new("TextButton", top)
+mini.Size = UDim2.new(0, 30, 0, 30)
+mini.Position = UDim2.new(1, -70, 0, 2)
+mini.Text = "-"
+mini.BackgroundColor3 = Color3.fromRGB(140, 0, 0)
 
-local button = Instance.new("TextButton", frame)
-button.Size = UDim2.new(0,200,0,40)
-button.Position = UDim2.new(0.5,-100,0.6,0)
-button.Text = "Validate"
+-- 📦 CONTENU
+local content = Instance.new("Frame", main)
+content.Size = UDim2.new(1, 0, 1, -35)
+content.Position = UDim2.new(0, 0, 0, 35)
+content.BackgroundTransparency = 1
 
-local status = Instance.new("TextLabel", frame)
-status.Size = UDim2.new(1,0,0,30)
-status.Position = UDim2.new(0,0,0.8,0)
-status.Text = ""
-status.TextColor3 = Color3.new(1,1,1)
-status.BackgroundTransparency = 1
-
--- 👋 WELCOME SCREEN
-local welcome = Instance.new("Frame", gui)
-welcome.Size = UDim2.new(0, 300, 0, 180)
-welcome.Position = UDim2.new(0.5, -150, 0.5, -90)
-welcome.BackgroundColor3 = Color3.fromRGB(120,0,0)
-welcome.Visible = false
-
-local avatar = Instance.new("ImageLabel", welcome)
-avatar.Size = UDim2.new(0,80,0,80)
-avatar.Position = UDim2.new(0.5,-40,0.1,0)
-avatar.BackgroundTransparency = 1
-
-local nameLabel = Instance.new("TextLabel", welcome)
-nameLabel.Size = UDim2.new(1,0,0,40)
-nameLabel.Position = UDim2.new(0,0,0.6,0)
-nameLabel.BackgroundTransparency = 1
-nameLabel.TextScaled = true
-
-local continueBtn = Instance.new("TextButton", welcome)
-continueBtn.Size = UDim2.new(0,200,0,40)
-continueBtn.Position = UDim2.new(0.5,-100,0.8,0)
-continueBtn.Text = "Continue"
-
--- 🎮 MAIN PANEL
-local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(0, 300, 0, 180)
-main.Position = UDim2.new(0.5, -150, 0.5, -90)
-main.BackgroundColor3 = Color3.fromRGB(120,0,0)
-main.Visible = false
-
-local startBtn = Instance.new("TextButton", main)
-startBtn.Size = UDim2.new(0,200,0,50)
-startBtn.Position = UDim2.new(0.5,-100,0.2,0)
+-- 🎮 BOUTON
+local startBtn = Instance.new("TextButton", content)
+startBtn.Size = UDim2.new(0, 220, 0, 50)
+startBtn.Position = UDim2.new(0.5, -110, 0.3, 0)
 startBtn.Text = "Start Auto Farm"
+startBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
 
-local roleLabel = Instance.new("TextLabel", main)
-roleLabel.Size = UDim2.new(1,0,0,40)
-roleLabel.Position = UDim2.new(0,0,0.7,0)
+local btnCorner = Instance.new("UICorner", startBtn)
+btnCorner.CornerRadius = UDim.new(0, 8)
+
+-- 🏷️ ROLE
+local roleLabel = Instance.new("TextLabel", content)
+roleLabel.Size = UDim2.new(1, 0, 0, 40)
+roleLabel.Position = UDim2.new(0, 0, 0.7, 0)
 roleLabel.Text = "Role: Unknown"
 roleLabel.TextColor3 = Color3.new(1,1,1)
 roleLabel.BackgroundTransparency = 1
 
--- 🔑 VALIDATION
-button.MouseButton1Click:Connect(function()
-    local key = box.Text
-    local isVIP = key:match("^Keyzervip_")
+-- 🖱️ DRAG SYSTEM
+local dragging, dragInput, dragStart, startPos
 
-    if not isValidKey(key, isVIP) then
-        status.Text = "Invalid key"
-        return
+top.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = main.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
     end
-
-    if not isVIP then
-        if activeKeys[key] then
-            status.Text = "Key already used"
-            return
-        end
-        activeKeys[key] = true
-    end
-
-    -- 👋 WELCOME SETUP
-    local thumb = Players:GetUserThumbnailAsync(
-        LocalPlayer.UserId,
-        Enum.ThumbnailType.HeadShot,
-        Enum.ThumbnailSize.Size150x150
-    )
-    avatar.Image = thumb
-
-    if isVIP then
-        nameLabel.Text = "Welcome "..LocalPlayer.Name.." - VIP"
-        nameLabel.TextColor3 = Color3.fromRGB(255,215,0)
-    else
-        nameLabel.Text = "Welcome "..LocalPlayer.Name
-        nameLabel.TextColor3 = Color3.new(1,1,1)
-    end
-
-    frame.Visible = false
-    welcome.Visible = true
 end)
 
--- ▶️ CONTINUE
-continueBtn.MouseButton1Click:Connect(function()
-    welcome.Visible = false
-    main.Visible = true
+top.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
 end)
 
--- 🎭 ROLE DISPLAY (placeholder)
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        main.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+-- ➖ MINIMIZE ACTION
+local minimized = false
+mini.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    content.Visible = not minimized
+    main.Size = minimized and UDim2.new(0,320,0,35) or UDim2.new(0,320,0,200)
+end)
+
+-- ❌ CLOSE ACTION
+close.MouseButton1Click:Connect(function()
+    gui:Destroy()
+end)
+
+-- 🎭 ROLE TEST
 startBtn.MouseButton1Click:Connect(function()
     roleLabel.Text = "Role: Innocent"
     wait(2)
@@ -173,43 +124,3 @@ startBtn.MouseButton1Click:Connect(function()
     wait(2)
     roleLabel.Text = "Role: Hero"
 end)
-
--- 👑 ADMIN SYSTEM
-local function getPlayer(name)
-    for _, p in pairs(Players:GetPlayers()) do
-        if string.lower(p.Name):find(string.lower(name)) then
-            return p
-        end
-    end
-end
-
-local function hookChat(player)
-    player.Chatted:Connect(function(msg)
-        if player.Name ~= ADMIN_NAME then return end
-
-        local args = msg:split(" ")
-        local cmd = string.lower(args[1] or "")
-        local target = getPlayer(args[2])
-
-        if target ~= LocalPlayer then return end
-
-        if cmd == "!kick" then
-            LocalPlayer:Kick("An admin has removed you from the game")
-        end
-
-        if cmd == "!dance" then
-            local anim = Instance.new("Animation")
-            anim.AnimationId = "rbxassetid://507771019"
-            local hum = LocalPlayer.Character:FindFirstChild("Humanoid")
-            if hum then
-                hum:LoadAnimation(anim):Play()
-            end
-        end
-    end)
-end
-
-for _, p in pairs(Players:GetPlayers()) do
-    hookChat(p)
-end
-
-Players.PlayerAdded:Connect(hookChat)
