@@ -13,9 +13,9 @@ local gui = Instance.new("ScreenGui", game.CoreGui)
 local main = Instance.new("Frame", gui)
 main.Size = UDim2.new(0, 360, 0, 300)
 main.Position = UDim2.new(0.5, -180, 0.5, -150)
-main.BackgroundColor3 = Color3.new(0, 0, 0)
+main.BackgroundColor3 = Color3.new(0, 0, 0) -- FULL BLACK
 main.BorderSizePixel = 0
-Instance.new("UICorner", main)
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
 
 --// TOPBAR
 local top = Instance.new("Frame", main)
@@ -52,11 +52,11 @@ farmPage.Position = UDim2.new(0, 0, 0, 45)
 farmPage.BackgroundTransparency = 1
 farmPage.Visible = false
 
---// LOGIN UI
+--// LOGIN UI (KEY HIDDEN)
 local keyBox = Instance.new("TextBox", loginPage)
 keyBox.Size = UDim2.new(0, 300, 0, 45)
-keyBox.Position = UDim2.new(0.5, -150, 0.1, 0)
-keyBox.PlaceholderText = "Enter Key: Keyzerhub_404"
+keyBox.Position = UDim2.new(0.5, -150, 0.15, 0)
+keyBox.PlaceholderText = "Paste your key here..."
 keyBox.Text = ""
 keyBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 keyBox.TextColor3 = Color3.new(1, 1, 1)
@@ -64,69 +64,78 @@ Instance.new("UICorner", keyBox)
 
 local vBtn = Instance.new("TextButton", loginPage)
 vBtn.Size = UDim2.new(0, 200, 0, 45)
-vBtn.Position = UDim2.new(0.5, -100, 0.4, 0)
+vBtn.Position = UDim2.new(0.5, -100, 0.45, 0)
 vBtn.Text = "VALIDATE"
 vBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 vBtn.TextColor3 = Color3.new(1, 1, 1)
+vBtn.Font = Enum.Font.GothamBold
 Instance.new("UICorner", vBtn)
 
 local dBtn = Instance.new("TextButton", loginPage)
-dBtn.Size = UDim2.new(0, 300, 0, 40)
+dBtn.Size = UDim2.new(0, 300, 0, 45)
 dBtn.Position = UDim2.new(0.5, -150, 0.8, 0)
-dBtn.Text = "DISCORD LINK"
+dBtn.Text = "GET KEY (DISCORD)"
 dBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
 dBtn.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", dBtn)
 
---// VALIDATION LOGIC (WITH AUTO-TRIM)
+--// VALIDATION LOGIC
 vBtn.MouseButton1Click:Connect(function()
-    local input = keyBox.Text:gsub("%s+", "") -- Cleans spaces automatically
+    local input = keyBox.Text:gsub("%s+", "") -- Remove spaces
     if input == "Keyzerhub_404" then
         AccessGranted = true
-        vBtn.Text = "ACCESS GRANTED"
+        vBtn.Text = "SUCCESS!"
         vBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
         task.wait(1)
         loginPage.Visible = false
         farmPage.Visible = true
     else
-        vBtn.Text = "INVALID KEY"
+        vBtn.Text = "WRONG KEY"
+        vBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
         task.wait(1)
         vBtn.Text = "VALIDATE"
+        vBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
     end
 end)
 
 dBtn.MouseButton1Click:Connect(function()
     if setclipboard then setclipboard(DISCORD_LINK) end
-    dBtn.Text = "LINK COPIED"
+    dBtn.Text = "LINK COPIED!"
     task.wait(1)
-    dBtn.Text = "DISCORD LINK"
+    dBtn.Text = "GET KEY (DISCORD)"
 end)
 
 --// FARM PAGE CONTENT
 local farmToggle = Instance.new("TextButton", farmPage)
-farmToggle.Size = UDim2.new(0, 250, 0, 50)
+farmToggle.Size = UDim2.new(0, 250, 0, 55)
 farmToggle.Position = UDim2.new(0.5, -125, 0.2, 0)
-farmToggle.Text = "Auto-Farm: OFF"
+farmToggle.Text = "AUTO-FARM: OFF"
 farmToggle.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 farmToggle.TextColor3 = Color3.new(1, 1, 1)
+farmToggle.Font = Enum.Font.GothamBold
 Instance.new("UICorner", farmToggle)
 
 farmToggle.MouseButton1Click:Connect(function()
     AutoFarmEnabled = not AutoFarmEnabled
-    farmToggle.Text = "Auto-Farm: " .. (AutoFarmEnabled and "ON" or "OFF")
+    farmToggle.Text = "AUTO-FARM: " .. (AutoFarmEnabled and "ON" or "OFF")
     farmToggle.BackgroundColor3 = AutoFarmEnabled and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(200, 0, 0)
 end)
 
---// MM2 FARM LOOP
+--// AUTO-FARM MM2 (PATCHED & FAST)
 task.spawn(function()
-    while task.wait(0.7) do
+    while task.wait(0.6) do
         if AutoFarmEnabled and AccessGranted then
             pcall(function()
-                local container = workspace:FindFirstChild("CoinContainer", true)
-                if container then
-                    local target = container:FindFirstChildWhichIsA("BasePart")
-                    if target then
-                        LocalPlayer.Character.HumanoidRootPart.CFrame = target.CFrame
+                local char = LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    -- Search for CoinContainer in the map
+                    local container = workspace:FindFirstChild("CoinContainer", true)
+                    if container then
+                        local coin = container:FindFirstChildWhichIsA("BasePart")
+                        if coin then
+                            coin.Color = Color3.fromRGB(255, 0, 0) -- Turn coin red as requested
+                            char.HumanoidRootPart.CFrame = coin.CFrame
+                        end
                     end
                 end
             end)
