@@ -1,254 +1,169 @@
---// SERVICES
-local Players = game:GetService("Players")
-local UIS = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
+-- [[ MAC-STYLE AUTO FARM GUI ]] --
 
-local MM2_ID = 142823291
-local LocalPlayer = Players.LocalPlayer
-local DISCORD_LINK = "https://discord.gg/G2KKtYjxcD"
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local UICorner_Main = Instance.new("UICorner")
+local TitleBar = Instance.new("Frame")
+local UICorner_Title = Instance.new("UICorner")
+local CloseBtn = Instance.new("TextButton")
+local UICorner_Close = Instance.new("UICorner")
+local MinimizeBtn = Instance.new("TextButton")
+local UICorner_Min = Instance.new("UICorner")
+local MaximizeBtn = Instance.new("TextButton")
+local UICorner_Max = Instance.new("UICorner")
+local TitleText = Instance.new("TextLabel")
+local ContentFrame = Instance.new("Frame")
+local FarmButton = Instance.new("TextButton")
+local UICorner_Farm = Instance.new("UICorner")
+local StatusText = Instance.new("TextLabel")
 
---// 1. GAME CHECKER (BLOCKER UI)
-if game.PlaceId ~= MM2_ID then
-    local blockGui = Instance.new("ScreenGui", game.CoreGui)
-    blockGui.Name = "KeyzerBlocker"
-    
-    local bg = Instance.new("Frame", blockGui)
-    bg.Size = UDim2.new(1, 0, 1, 0)
-    bg.BackgroundColor3 = Color3.new(0, 0, 0)
-    bg.Active = true
+-- Configuration du ScreenGui
+ScreenGui.Name = "MacOsFarmGui"
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
 
-    -- Big Title Top
-    local bigTitle = Instance.new("TextLabel", bg)
-    bigTitle.Size = UDim2.new(1, 0, 0, 100)
-    bigTitle.Position = UDim2.new(0, 0, 0.1, 0)
-    bigTitle.Text = "Keyzer Hub"
-    bigTitle.TextColor3 = Color3.new(1, 1, 1)
-    bigTitle.Font = Enum.Font.GothamBold
-    bigTitle.TextSize = 60
-    bigTitle.BackgroundTransparency = 1
+-- Fenêtre Principale (Style Épuré Mac)
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(240, 240, 240) -- Gris clair Apple
+MainFrame.Position = UDim2.new(0.5, -175, 0.5, -100)
+MainFrame.Size = UDim2.new(0, 350, 0, 200)
+MainFrame.Active = true
+MainFrame.Draggable = true -- Permet de glisser la fenêtre
 
-    -- Middle Message
-    local lostText = Instance.new("TextLabel", bg)
-    lostText.Size = UDim2.new(1, 0, 0, 50)
-    lostText.Position = UDim2.new(0, 0, 0.5, -25)
-    lostText.Text = "Are you lost..????"
-    lostText.TextColor3 = Color3.fromRGB(255, 0, 0)
-    lostText.Font = Enum.Font.GothamMedium
-    lostText.TextSize = 35
-    lostText.BackgroundTransparency = 1
+UICorner_Main.CornerRadius = UDim.new(0, 10)
+UICorner_Main.Parent = MainFrame
 
-    -- Small Footer Bottom
-    local footer = Instance.new("TextLabel", bg)
-    footer.Size = UDim2.new(1, 0, 0, 40)
-    footer.Position = UDim2.new(0, 0, 0.9, 0)
-    footer.Text = "This script is only made for MM2."
-    footer.TextColor3 = Color3.fromRGB(100, 100, 100)
-    footer.Font = Enum.Font.Gotham
-    footer.TextSize = 16
-    footer.BackgroundTransparency = 1
+-- Barre de titre (Top Bar)
+TitleBar.Name = "TitleBar"
+TitleBar.Parent = MainFrame
+TitleBar.BackgroundColor3 = Color3.fromRGB(225, 225, 225)
+TitleBar.Size = UDim2.new(1, 0, 0, 30)
 
-    local cBtn = Instance.new("TextButton", bg)
-    cBtn.Size = UDim2.new(0, 160, 0, 45)
-    cBtn.Position = UDim2.new(0.5, -80, 0.7, 0)
-    cBtn.Text = "CLOSE"
-    cBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    cBtn.TextColor3 = Color3.new(1, 1, 1)
-    cBtn.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", cBtn)
-    cBtn.MouseButton1Click:Connect(function() blockGui:Destroy() end)
+UICorner_Title.CornerRadius = UDim.new(0, 10)
+UICorner_Title.Parent = TitleBar
 
-    return -- Stops the rest of the script
-end
+-- Boutons Mac (Rouge, Jaune, Vert)
+CloseBtn.Name = "CloseBtn"
+CloseBtn.Parent = TitleBar
+CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 95, 87) -- Rouge Mac
+CloseBtn.Position = UDim2.new(0, 12, 0, 8)
+CloseBtn.Size = UDim2.new(0, 13, 0, 13)
+CloseBtn.Text = ""
+UICorner_Close.CornerRadius = UDim.new(1, 0)
+UICorner_Close.Parent = CloseBtn
 
---// 2. MAIN HUB (IF IN MM2)
-local AccessGranted = false
-local MasterToggle = false
+MinimizeBtn.Name = "MinimizeBtn"
+MinimizeBtn.Parent = TitleBar
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(254, 188, 46) -- Jaune Mac
+MinimizeBtn.Position = UDim2.new(0, 32, 0, 8)
+MinimizeBtn.Size = UDim2.new(0, 13, 0, 13)
+MinimizeBtn.Text = ""
+UICorner_Min.CornerRadius = UDim.new(1, 0)
+UICorner_Min.Parent = MinimizeBtn
 
-local gui = Instance.new("ScreenGui", game.CoreGui)
-gui.Name = "KeyzerHub_Official"
-local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(0, 360, 0, 300)
-main.Position = UDim2.new(0.5, -180, 0.5, -150)
-main.BackgroundColor3 = Color3.new(0, 0, 0)
-main.BorderSizePixel = 0
-Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
+MaximizeBtn.Name = "MaximizeBtn"
+MaximizeBtn.Parent = TitleBar
+MaximizeBtn.BackgroundColor3 = Color3.fromRGB(40, 200, 64) -- Vert Mac
+MaximizeBtn.Position = UDim2.new(0, 52, 0, 8)
+MaximizeBtn.Size = UDim2.new(0, 13, 0, 13)
+MaximizeBtn.Text = ""
+UICorner_Max.CornerRadius = UDim.new(1, 0)
+UICorner_Max.Parent = MaximizeBtn
 
--- Topbar
-local top = Instance.new("Frame", main)
-top.Size = UDim2.new(1, 0, 0, 45)
-top.BackgroundTransparency = 1
+-- Titre de la fenêtre
+TitleText.Name = "TitleText"
+TitleText.Parent = TitleBar
+TitleText.BackgroundTransparency = 1
+TitleText.Position = UDim2.new(0, 0, 0, 0)
+TitleText.Size = UDim2.new(1, 0, 1, 0)
+TitleText.Font = Enum.Font.SourceSansMedium
+TitleText.Text = "Auto Farm - macOS Edition"
+TitleText.TextColor3 = Color3.fromRGB(70, 70, 70)
+TitleText.TextSize = 14
 
-local title = Instance.new("TextLabel", top)
-title.Size = UDim2.new(1, -50, 1, 0)
-title.Position = UDim2.new(0, 15, 0, 0)
-title.Text = "Keyzer Hub 💯"
-title.TextColor3 = Color3.new(1, 1, 1)
-title.Font = Enum.Font.GothamBold
-title.TextSize = 20
-title.BackgroundTransparency = 1
-title.TextXAlignment = Enum.TextXAlignment.Left
+-- Contenu de la fenêtre
+ContentFrame.Name = "ContentFrame"
+ContentFrame.Parent = MainFrame
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.Position = UDim2.new(0, 0, 0, 30)
+ContentFrame.Size = UDim2.new(1, 0, 1, -30)
 
-local close = Instance.new("TextButton", top)
-close.Size = UDim2.new(0, 30, 0, 30)
-close.Position = UDim2.new(1, -38, 0, 7)
-close.Text = "X"
-close.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-close.TextColor3 = Color3.new(1, 1, 1)
-Instance.new("UICorner", close)
+-- Bouton de Farm (Style bouton système Apple)
+FarmButton.Name = "FarmButton"
+FarmButton.Parent = ContentFrame
+FarmButton.BackgroundColor3 = Color3.fromRGB(0, 122, 255) -- Bleu Apple
+FarmButton.Position = UDim2.new(0.5, -75, 0.4, -20)
+FarmButton.Size = UDim2.new(0, 150, 0, 40)
+FarmButton.Font = Enum.Font.SourceSansSemibold
+FarmButton.Text = "Start Auto Farm"
+FarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+FarmButton.TextSize = 16
 
--- Pages
-local loginPage = Instance.new("Frame", main)
-loginPage.Size = UDim2.new(1, 0, 1, -45)
-loginPage.Position = UDim2.new(0, 0, 0, 45)
-loginPage.BackgroundTransparency = 1
+UICorner_Farm.CornerRadius = UDim.new(0, 6)
+UICorner_Farm.Parent = FarmButton
 
-local farmPage = Instance.new("Frame", main)
-farmPage.Size = UDim2.new(1, 0, 1, -45)
-farmPage.Position = UDim2.new(0, 0, 0, 45)
-farmPage.BackgroundTransparency = 1
-farmPage.Visible = false
+-- Statut
+StatusText.Name = "StatusText"
+StatusText.Parent = ContentFrame
+StatusText.BackgroundTransparency = 1
+StatusText.Position = UDim2.new(0, 0, 0.7, 0)
+StatusText.Size = UDim2.new(1, 0, 0, 20)
+StatusText.Font = Enum.Font.SourceSans
+StatusText.Text = "Status: Idle"
+StatusText.TextColor3 = Color3.fromRGB(120, 120, 120)
+StatusText.TextSize = 14
 
--- Login UI (Key Hidden)
-local keyBox = Instance.new("TextBox", loginPage)
-keyBox.Size = UDim2.new(0, 300, 0, 45)
-keyBox.Position = UDim2.new(0.5, -150, 0.15, 0)
-keyBox.PlaceholderText = "Paste your secret key here..."
-keyBox.Text = ""
-keyBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-keyBox.TextColor3 = Color3.new(1, 1, 1)
-Instance.new("UICorner", keyBox)
+-- [[ LOGIQUE DU SCRIPT ]] --
 
-local vBtn = Instance.new("TextButton", loginPage)
-vBtn.Size = UDim2.new(0, 200, 0, 45)
-vBtn.Position = UDim2.new(0.5, -100, 0.45, 0)
-vBtn.Text = "VALIDATE"
-vBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-vBtn.TextColor3 = Color3.new(1, 1, 1)
-vBtn.Font = Enum.Font.GothamBold
-Instance.new("UICorner", vBtn)
+local farming = false
 
-local dBtn = Instance.new("TextButton", loginPage)
-dBtn.Size = UDim2.new(0, 300, 0, 45)
-dBtn.Position = UDim2.new(0.5, -150, 0.8, 0)
-dBtn.Text = "GET KEY (DISCORD)"
-dBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
-dBtn.TextColor3 = Color3.new(1, 1, 1)
-Instance.new("UICorner", dBtn)
-
---// 3. AUTOMATION FUNCTIONS
-local function applyLowGraphics()
-    settings().Rendering.QualityLevel = 1
-    for _, v in pairs(workspace:GetDescendants()) do
-        if v:IsA("BasePart") then v.Material = Enum.Material.SmoothPlastic end
-    end
-end
-
-local function applyESP()
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character then
-            local hl = p.Character:FindFirstChild("KeyzerHighlight") or Instance.new("Highlight", p.Character)
-            hl.Name = "KeyzerHighlight"
-            task.spawn(function()
-                while hl.Parent and MasterToggle do
-                    if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then
-                        hl.FillColor = Color3.fromRGB(255, 0, 0) -- Murderer
-                    elseif p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun") then
-                        hl.FillColor = Color3.fromRGB(0, 0, 255) -- Sheriff
-                    else
-                        hl.FillColor = Color3.fromRGB(0, 255, 0) -- Innocent
-                    end
-                    task.wait(1)
-                end
-                if not MasterToggle then hl:Destroy() end
-            end)
+-- Fonction d'Auto Farm (À adapter selon ton jeu)
+local function doAutoFarm()
+    spawn(function()
+        while farming do
+            -- ICI : Ajoute le code spécifique au jeu pour le farm.
+            -- Exemple générique : simulation de clic ou téléportation.
+            print("Farming en cours...") 
+            task.wait(1) -- Pause d'une seconde entre chaque action
         end
-    end
+    end)
 end
 
---// 4. INTERACTION LOGIC
-vBtn.MouseButton1Click:Connect(function()
-    if keyBox.Text:gsub("%s+", "") == "Keyzer_f9b3d2a7c8e4f1b6d5a9e0c3f2b7a1d8e4c6f0b9a3d5e7c8f1b2a6d9c0e3f4b7" then
-        AccessGranted = true
-        loginPage.Visible = false
-        farmPage.Visible = true
+-- Interaction Bouton Start/Stop
+FarmButton.MouseButton1Click:Connect(function()
+    farming = not farming
+    if farming then
+        FarmButton.Text = "Stop Auto Farm"
+        FarmButton.BackgroundColor3 = Color3.fromRGB(255, 59, 48) -- Rouge Apple pour le Stop
+        StatusText.Text = "Status: Farming..."
+        StatusText.TextColor3 = Color3.fromRGB(40, 200, 64)
+        doAutoFarm()
     else
-        vBtn.Text = "WRONG KEY"
-        task.wait(1)
-        vBtn.Text = "VALIDATE"
+        FarmButton.Text = "Start Auto Farm"
+        FarmButton.BackgroundColor3 = Color3.fromRGB(0, 122, 255) -- Retour au bleu
+        StatusText.Text = "Status: Idle"
+        StatusText.TextColor3 = Color3.fromRGB(120, 120, 120)
     end
 end)
 
-dBtn.MouseButton1Click:Connect(function()
-    if setclipboard then setclipboard(DISCORD_LINK) end
-    dBtn.Text = "COPIED TO CLIPBOARD!"
-    task.wait(1)
-    dBtn.Text = "GET KEY (DISCORD)"
+-- Fermer la fenêtre (Bouton Rouge)
+CloseBtn.MouseButton1Click:Connect(function()
+    farming = false
+    ScreenGui:Destroy()
 end)
 
--- Main Button (Start All)
-local mainBtn = Instance.new("TextButton", farmPage)
-mainBtn.Size = UDim2.new(0, 280, 0, 65)
-mainBtn.Position = UDim2.new(0.5, -140, 0.35, 0)
-mainBtn.Text = "START ALL: OFF"
-mainBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-mainBtn.TextColor3 = Color3.new(1, 1, 1)
-mainBtn.Font = Enum.Font.GothamBold
-mainBtn.TextSize = 20
-Instance.new("UICorner", mainBtn)
-
-mainBtn.MouseButton1Click:Connect(function()
-    MasterToggle = not MasterToggle
-    if MasterToggle then
-        mainBtn.Text = "START AUTOFARM: ON"
-        mainBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-        applyLowGraphics()
-        applyESP()
+-- Réduire la fenêtre (Bouton Jaune)
+MinimizeBtn.MouseButton1Click:Connect(function()
+    ContentFrame.Visible = not ContentFrame.Visible
+    if not ContentFrame.Visible then
+        MainFrame.Size = UDim2.new(0, 350, 0, 30) -- Garde juste la barre supérieure
     else
-        mainBtn.Text = "START AUTOFARM: OFF"
-        mainBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+        MainFrame.Size = UDim2.new(0, 350, 0, 200) -- Redonne la taille normale
     end
 end)
 
---// 5. MAIN LOOP (FARM)
-task.spawn(function()
-    while task.wait(0.5) do
-        if not gui.Parent then break end
-        if MasterToggle and AccessGranted then
-            pcall(function()
-                local coinContainer = workspace:FindFirstChild("CoinContainer", true)
-                if coinContainer then
-                    local coin = coinContainer:FindFirstChildWhichIsA("BasePart")
-                    if coin then
-                        coin.Color = Color3.new(1, 0, 0) -- Coin Red
-                        LocalPlayer.Character.HumanoidRootPart.CFrame = coin.CFrame
-                    end
-                end
-            end)
-        end
-    end
-end)
-
---// 6. TOTAL CLOSE
-close.MouseButton1Click:Connect(function()
-    MasterToggle = false
-    gui:Destroy()
-end)
-
---// 7. DRAG SYSTEM
-local dragging, dragInput, dragStart, startPos
-top.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = main.Position
-    end
-end)
-UIS.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-UIS.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+-- Optionnel : Bouton Vert (Agrandir) change juste une couleur pour le style ici
+MaximizeBtn.MouseButton1Click:Connect(function()
+    print("Fonctionnalité plein écran non nécessaire pour ce mini GUI.")
 end)
