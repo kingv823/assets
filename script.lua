@@ -1,4 +1,4 @@
--- [[ KEYZER AUTO FARM - MAC EDITION FIXED V3 ]] --
+-- [[ KEYZER AUTO FARM - MOBILE & EMULATOR ULTRA-COMPATIBLE V4 ]] --
 
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
@@ -6,7 +6,7 @@ local Workspace = game:GetService("Workspace")
 
 local LocalPlayer = Players.LocalPlayer
 
--- Nettoyage anti-bug : supprime l'ancienne interface si elle existe déjà
+-- Nettoyage des anciennes versions pour éviter les conflits
 local oldGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("KeyzerFarmGui")
 if oldGui then oldGui:Destroy() end
 
@@ -28,16 +28,17 @@ local FarmButton = Instance.new("TextButton")
 local UICorner_Farm = Instance.new("UICorner")
 local StatusText = Instance.new("TextLabel")
 
--- Configuration de l'affichage principal
+-- Configuration du ScreenGui
 ScreenGui.Name = "KeyzerFarmGui"
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 
--- Dimensions strictes de la fenêtre style Mac
+-- Tailles Mac fixes
 local normalSize = UDim2.new(0, 350, 0, 200)
 local minimizedSize = UDim2.new(0, 350, 0, 30)
 local maximizedSize = UDim2.new(0, 550, 0, 350)
 
+-- Fenêtre principale (On désactive ClipsDescendants pour forcer l'affichage sur mobile)
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
@@ -45,32 +46,27 @@ MainFrame.Position = UDim2.new(0.5, -175, 0.4, -100)
 MainFrame.Size = normalSize
 MainFrame.Active = true
 MainFrame.Draggable = true
-MainFrame.ClipsDescendants = true
+MainFrame.ClipsDescendants = false -- FIX MOBILE : Ne cache plus jamais le contenu !
 
 UICorner_Main.CornerRadius = UDim.new(0, 10)
 UICorner_Main.Parent = MainFrame
 
--- Barre supérieure Mac (Top Bar)
+-- Barre du haut
 TitleBar.Name = "TitleBar"
 TitleBar.Parent = MainFrame
 TitleBar.BackgroundColor3 = Color3.fromRGB(225, 225, 225)
 TitleBar.Size = UDim2.new(1, 0, 0, 30)
-TitleBar.ZIndex = 3
 
 UICorner_Title.CornerRadius = UDim.new(0, 10)
 UICorner_Title.Parent = TitleBar
 
--- --- LES 3 BOUTONS MAC ---
+-- Les 3 boutons systèmes Mac
 CloseBtn.Name = "CloseBtn"
 CloseBtn.Parent = TitleBar
 CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 95, 87)
 CloseBtn.Position = UDim2.new(0, 12, 0, 8)
 CloseBtn.Size = UDim2.new(0, 13, 0, 13)
-CloseBtn.Font = Enum.Font.SourceSansBold
 CloseBtn.Text = ""
-CloseBtn.TextColor3 = Color3.fromRGB(70, 0, 0)
-CloseBtn.TextSize = 11
-CloseBtn.ZIndex = 4
 UICorner_Close.CornerRadius = UDim.new(1, 0)
 UICorner_Close.Parent = CloseBtn
 
@@ -79,11 +75,7 @@ MinimizeBtn.Parent = TitleBar
 MinimizeBtn.BackgroundColor3 = Color3.fromRGB(254, 188, 46)
 MinimizeBtn.Position = UDim2.new(0, 32, 0, 8)
 MinimizeBtn.Size = UDim2.new(0, 13, 0, 13)
-MinimizeBtn.Font = Enum.Font.SourceSansBold
 MinimizeBtn.Text = ""
-MinimizeBtn.TextColor3 = Color3.fromRGB(100, 60, 0)
-MinimizeBtn.TextSize = 11
-MinimizeBtn.ZIndex = 4
 UICorner_Min.CornerRadius = UDim.new(1, 0)
 UICorner_Min.Parent = MinimizeBtn
 
@@ -92,60 +84,51 @@ MaximizeBtn.Parent = TitleBar
 MaximizeBtn.BackgroundColor3 = Color3.fromRGB(40, 200, 64)
 MaximizeBtn.Position = UDim2.new(0, 52, 0, 8)
 MaximizeBtn.Size = UDim2.new(0, 13, 0, 13)
-MaximizeBtn.Font = Enum.Font.SourceSansBold
 MaximizeBtn.Text = ""
-MaximizeBtn.TextColor3 = Color3.fromRGB(0, 70, 0)
-MaximizeBtn.TextSize = 9
-MaximizeBtn.ZIndex = 4
 UICorner_Max.CornerRadius = UDim.new(1, 0)
 UICorner_Max.Parent = MaximizeBtn
 
-TitleBar.MouseEnter:Connect(function()
-    CloseBtn.Text = "✕"
-    MinimizeBtn.Text = "─"
-    MaximizeBtn.Text = "⤢"
-end)
-TitleBar.MouseLeave:Connect(function()
-    CloseBtn.Text = ""
-    MinimizeBtn.Text = ""
-    MaximizeBtn.Text = ""
-end)
-
+-- Titre principal (Forcé au premier plan)
 TitleText.Name = "TitleText"
-TitleText.Parent = TitleBar
+TitleText.Parent = MainFrame
 TitleText.BackgroundTransparency = 1
-TitleText.Size = UDim2.new(1, 0, 1, 0)
-TitleText.Font = Enum.Font.SourceSansMedium
+TitleText.Position = UDim2.new(0, 0, 0, 0)
+TitleText.Size = UDim2.new(1, 0, 0, 30)
+TitleText.Font = Enum.Font.SourceSansBold
 TitleText.Text = "Keyzer Auto Farm"
-TitleText.TextColor3 = Color3.fromRGB(70, 70, 70)
-TitleText.TextSize = 14
-TitleText.ZIndex = 3
+TitleText.TextColor3 = Color3.fromRGB(60, 60, 60)
+TitleText.TextSize = 15
+TitleText.ZIndex = 10
 
--- === LE BOUTON DE FARM ===
+-- === LE BOUTON START AUTO FARM (Forcé au premier plan total) ===
 FarmButton.Name = "FarmButton"
 FarmButton.Parent = MainFrame
-FarmButton.BackgroundColor3 = Color3.fromRGB(0, 122, 255)
-FarmButton.Position = UDim2.new(0.5, -85, 0.5, -20)
+FarmButton.BackgroundColor3 = Color3.fromRGB(0, 122, 255) -- Bleu Apple
+FarmButton.Position = UDim2.new(0.5, -85, 0, 70) -- Position absolue fixe
 FarmButton.Size = UDim2.new(0, 170, 0, 45)
-FarmButton.Font = Enum.Font.SourceSansSemibold
+FarmButton.Font = Enum.Font.SourceSansBold
 FarmButton.Text = "Start Auto Farm"
 FarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 FarmButton.TextSize = 16
-FarmButton.ZIndex = 2
+FarmButton.ZIndex = 10 -- Priorité max d'affichage
+FarmButton.Visible = true
 
 UICorner_Farm.CornerRadius = UDim.new(0, 8)
 UICorner_Farm.Parent = FarmButton
 
+-- Statut de farm (Placé en bas de la fenêtre)
 StatusText.Name = "StatusText"
 StatusText.Parent = MainFrame
 StatusText.BackgroundTransparency = 1
-StatusText.Position = UDim2.new(0, 0, 0.8, -10)
+StatusText.Position = UDim2.new(0, 0, 0, 140)
 StatusText.Size = UDim2.new(1, 0, 0, 25)
-StatusText.Font = Enum.Font.SourceSans
+StatusText.Font = Enum.Font.SourceSansMedium
 StatusText.Text = "Status: Idle (Ready)"
 StatusText.TextColor3 = Color3.fromRGB(100, 100, 100)
 StatusText.TextSize = 14
-StatusText.ZIndex = 2
+StatusText.ZIndex = 10
+StatusText.Visible = true
+
 
 -- [[ SCRIPT DE L'AUTO FARM ]] --
 local mapNames = {
@@ -212,7 +195,8 @@ local function doAutoFarm()
     end)
 end
 
--- [[ LOGIQUE DES CONFIGURATIONS BOUTONS MAC ]] --
+
+-- [[ LOGIQUE DES BOUTONS ]] --
 local isMinimized = false
 local isMaximized = false
 
@@ -243,13 +227,11 @@ MaximizeBtn.MouseButton1Click:Connect(function()
     TweenService:Create(MainFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = targetSize, Position = targetPos}):Play()
     
     if isMaximized then
-        FarmButton.Position = UDim2.new(0.5, -90, 0.5, -25)
-        FarmButton.Size = UDim2.new(0, 180, 0, 50)
-        StatusText.Position = UDim2.new(0, 0, 0.9, -10)
+        FarmButton.Position = UDim2.new(0.5, -90, 0, 130)
+        StatusText.Position = UDim2.new(0, 0, 0, 260)
     else
-        FarmButton.Position = UDim2.new(0.5, -85, 0.5, -20)
-        FarmButton.Size = UDim2.new(0, 170, 0, 45)
-        StatusText.Position = UDim2.new(0, 0, 0.8, -10)
+        FarmButton.Position = UDim2.new(0.5, -85, 0, 70)
+        StatusText.Position = UDim2.new(0, 0, 0, 140)
     end
 end)
 
