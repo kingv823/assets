@@ -1,10 +1,15 @@
--- [[ KEYZER AUTO FARM - MAC EDITION ]] --
+-- [[ KEYZER AUTO FARM - MAC EDITION (FIXED CLOSING) ]] --
 
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 
 local LocalPlayer = Players.LocalPlayer
+
+-- Supprimer l'ancienne interface si elle existe déjà pour éviter les doublons
+if LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("KeyzerFarmGui") then
+    LocalPlayer.PlayerGui.KeyzerFarmGui:Destroy()
+end
 
 local ScreenGui = Instance.new("ScreenGui")
 local MainFrame = Instance.new("Frame")
@@ -35,7 +40,7 @@ local maximizedSize = UDim2.new(0, 600, 0, 400)
 
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(240, 240, 240) -- Gris clair Apple
+MainFrame.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
 MainFrame.Position = UDim2.new(0.5, -180, 0.5, -110)
 MainFrame.Size = normalSize
 MainFrame.Active = true
@@ -54,7 +59,9 @@ TitleBar.Size = UDim2.new(1, 0, 0, 30)
 UICorner_Title.CornerRadius = UDim.new(0, 10)
 UICorner_Title.Parent = TitleBar
 
--- Boutons de contrôle (Rouge, Jaune, Vert)
+-- --- BOUTONS MAC SCRIPTÉS ---
+
+-- Rouge : Fermer VRAIMENT
 CloseBtn.Name = "CloseBtn"
 CloseBtn.Parent = TitleBar
 CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 95, 87)
@@ -67,6 +74,7 @@ CloseBtn.TextSize = 11
 UICorner_Close.CornerRadius = UDim.new(1, 0)
 UICorner_Close.Parent = CloseBtn
 
+-- Jaune : Réduire
 MinimizeBtn.Name = "MinimizeBtn"
 MinimizeBtn.Parent = TitleBar
 MinimizeBtn.BackgroundColor3 = Color3.fromRGB(254, 188, 46)
@@ -79,6 +87,7 @@ MinimizeBtn.TextSize = 11
 UICorner_Min.CornerRadius = UDim.new(1, 0)
 UICorner_Min.Parent = MinimizeBtn
 
+-- Vert : Plein écran
 MaximizeBtn.Name = "MaximizeBtn"
 MaximizeBtn.Parent = TitleBar
 MaximizeBtn.BackgroundColor3 = Color3.fromRGB(40, 200, 64)
@@ -104,7 +113,7 @@ TitleBar.MouseLeave:Connect(function()
     MaximizeBtn.Text = ""
 end)
 
--- Nom du Script dans la barre
+-- Nom du Script
 TitleText.Name = "TitleText"
 TitleText.Parent = TitleBar
 TitleText.BackgroundTransparency = 1
@@ -121,10 +130,10 @@ ContentFrame.BackgroundTransparency = 1
 ContentFrame.Position = UDim2.new(0, 0, 0, 30)
 ContentFrame.Size = UDim2.new(1, 0, 1, -30)
 
--- LE BOUTON START AUTO FARM (Forcé au premier plan)
+-- Bouton de démarrage
 FarmButton.Name = "FarmButton"
 FarmButton.Parent = ContentFrame
-FarmButton.BackgroundColor3 = Color3.fromRGB(0, 122, 255) -- Bleu Apple
+FarmButton.BackgroundColor3 = Color3.fromRGB(0, 122, 255)
 FarmButton.Position = UDim2.new(0.5, -85, 0.35, -20)
 FarmButton.Size = UDim2.new(0, 170, 0, 45)
 FarmButton.Font = Enum.Font.SourceSansSemibold
@@ -132,11 +141,10 @@ FarmButton.Text = "Start Auto Farm"
 FarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 FarmButton.TextSize = 16
 FarmButton.ZIndex = 5
-
 UICorner_Farm.CornerRadius = UDim.new(0, 8)
 UICorner_Farm.Parent = FarmButton
 
--- Texte de Statut complet
+-- Texte de Statut
 StatusText.Name = "StatusText"
 StatusText.Parent = ContentFrame
 StatusText.BackgroundTransparency = 1
@@ -149,43 +157,6 @@ StatusText.TextSize = 15
 StatusText.ZIndex = 5
 
 
--- [[ GESTION DE L'INTERFACE MAC ]] --
-
-local isMinimized = false
-local isMaximized = false
-local farming = false
-
-CloseBtn.MouseButton1Click:Connect(function()
-    farming = false
-    ScreenGui:Destroy()
-end)
-
-MinimizeBtn.MouseButton1Click:Connect(function()
-    if isMaximized then return end
-    isMinimized = not isMinimized
-    ContentFrame.Visible = not isMinimized
-    local targetSize = isMinimized and minimizedSize or normalSize
-    TweenService:Create(MainFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = targetSize}):Play()
-end)
-
-MaximizeBtn.MouseButton1Click:Connect(function()
-    if isMinimized then return end
-    isMaximized = not isMaximized
-    local targetSize = isMaximized and maximizedSize or normalSize
-    local targetPos = isMaximized and UDim2.new(0.5, -300, 0.5, -200) or UDim2.new(0.5, -180, 0.5, -110)
-    
-    TweenService:Create(MainFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = targetSize, Position = targetPos}):Play()
-    
-    if isMaximized then
-        FarmButton.Position = UDim2.new(0.5, -100, 0.4, -25)
-        FarmButton.Size = UDim2.new(0, 200, 0, 50)
-    else
-        FarmButton.Position = UDim2.new(0.5, -85, 0.35, -20)
-        FarmButton.Size = UDim2.new(0, 170, 0, 45)
-    end
-end)
-
-
 -- [[ FONCTIONNALITÉ AUTO FARM ]] --
 
 local mapNames = {
@@ -195,6 +166,7 @@ local mapNames = {
     "Abandoned Mine", "Bloxburg", "Chaos Canyon", "Crossroads", "Glass Houses", "Haunted House", "Hospital (MM1)", "Hotel (MM1)", "Italy", "Neighborhood", "Office", "Ship", "Terraria", "The Lab"
 }
 
+local farming = false
 local speed = 25 
 
 local function getCurrentMap()
@@ -251,18 +223,58 @@ local function doAutoFarm()
     end)
 end
 
--- Activation / Désactivation
+
+-- [[ GESTION DES ACTIONS INTERFACE ]] --
+
+local isMinimized = false
+local isMaximized = false
+
+-- BOUTON ROUGE : Ferme TOUT et arrête proprement l'exécution
+CloseBtn.MouseButton1Click:Connect(function()
+    farming = false -- Force l'arrêt immédiat de la boucle infinie de farm
+    task.wait(0.1)  -- Donne un léger instant au script pour stopper l'action en cours
+    ScreenGui:Destroy() -- Supprime définitivement l'interface graphique du jeu
+end)
+
+-- BOUTON JAUNE : Réduire / Restaurer
+MinimizeBtn.MouseButton1Click:Connect(function()
+    if isMaximized then return end
+    isMinimized = not isMinimized
+    ContentFrame.Visible = not isMinimized
+    local targetSize = isMinimized and minimizedSize or normalSize
+    TweenService:Create(MainFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = targetSize}):Play()
+end)
+
+-- BOUTON VERT : Agrandir
+MaximizeBtn.MouseButton1Click:Connect(function()
+    if isMinimized then return end
+    isMaximized = not isMaximized
+    local targetSize = isMaximized and maximizedSize or normalSize
+    local targetPos = isMaximized and UDim2.new(0.5, -300, 0.5, -200) or UDim2.new(0.5, -180, 0.5, -110)
+    
+    TweenService:Create(MainFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = targetSize, Position = targetPos}):Play()
+    
+    if isMaximized then
+        FarmButton.Position = UDim2.new(0.5, -100, 0.4, -25)
+        FarmButton.Size = UDim2.new(0, 200, 0, 50)
+    else
+        FarmButton.Position = UDim2.new(0.5, -85, 0.35, -20)
+        FarmButton.Size = UDim2.new(0, 170, 0, 45)
+    end
+end)
+
+-- Activation / Désactivation du Farm
 FarmButton.MouseButton1Click:Connect(function()
     farming = not farming
     if farming then
         FarmButton.Text = "Stop Auto Farm"
-        FarmButton.BackgroundColor3 = Color3.fromRGB(255, 59, 48) -- Rouge bouton actif
+        FarmButton.BackgroundColor3 = Color3.fromRGB(255, 59, 48)
         StatusText.Text = "Status: Auto Farm Active"
         StatusText.TextColor3 = Color3.fromRGB(40, 200, 64)
         doAutoFarm()
     else
         FarmButton.Text = "Start Auto Farm"
-        FarmButton.BackgroundColor3 = Color3.fromRGB(0, 122, 255) -- Bleu
+        FarmButton.BackgroundColor3 = Color3.fromRGB(0, 122, 255)
         StatusText.Text = "Status: Idle"
         StatusText.TextColor3 = Color3.fromRGB(120, 120, 120)
     end
