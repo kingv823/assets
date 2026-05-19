@@ -1,4 +1,4 @@
--- [[ KEYZER AUTO FARM - COIN COLLECTOR FIX V11 ]] --
+-- [[ KEYZER AUTO FARM & AUTO KILL - V11 FIX ]] --
 
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
@@ -76,25 +76,40 @@ UICorner_Farm.CornerRadius = UDim.new(0, 8)
 UICorner_Farm.Parent = FarmButton
 
 
--- [[ LOGIQUE DE TÉLÉPORTATION ALLONGÉE DIRECTEMENT SUR LA PIÈCE ]] --
+-- [[ LOGIQUE DE DETECTION ET MÉTHODES ]] --
 
 local farming = false
 
+-- Trouver les pièces
 local function getCoins()
     local container = Workspace:FindFirstChild("CoinContainer", true)
-    if container then
-        return container:GetChildren()
-    end
+    if container then return container:GetChildren() end
     
     local map = Workspace:FindFirstChild("Map") or Workspace:FindFirstChild("Normal")
     if map then
         local coinFolder = map:FindFirstChild("CoinContainer", true)
         if coinFolder then return coinFolder:GetChildren() end
     end
-    
     return {}
 end
 
+-- Trouver le couteau (dans le perso ou l'inventaire)
+local function getKnife()
+    local char = LocalPlayer.Character
+    if char then
+        local knife = char:FindFirstChild("Knife") or char:FindFirstChild("Couteau")
+        if knife and knife:IsA("Tool") then return knife end
+    end
+    
+    local backpack = LocalPlayer:FindFirstChild("Backpack")
+    if backpack then
+        local knife = backpack:FindFirstChild("Knife") or backpack:FindFirstChild("Couteau")
+        if knife and knife:IsA("Tool") then return knife end
+    end
+    return nil
+end
+
+-- Boucle principale
 local function startFarmLoop()
     task.spawn(function()
         while farming do
@@ -103,24 +118,51 @@ local function startFarmLoop()
             local humanoid = character and character:FindFirstChildOfClass("Humanoid")
             
             if hrp and humanoid then
-                local allCoins = getCoins()
-                if #allCoins > 0 then
-                    FarmButton.Text = "FARMING... (" .. #allCoins .. " left)"
+                local knife = getKnife()
+                
+                -- [[ MODE MURDERER : AUTO KILL ]] --
+                if knife then
+                    FarmButton.Text = "MURDER MODE: KILLING ALL..."
                     
-                    local targetCoin = allCoins[1]
-                    if targetCoin and targetCoin:IsA("BasePart") then
-                        -- 1. Téléportation PILE sur la pièce ET inclinaison à plat ventre (-90°)
-                        -- Le perso est fusionné avec la pièce, impossible de la rater
-                        hrp.CFrame = targetCoin.CFrame * CFrame.Angles(math.rad(-90), 0, 0)
-                        
-                        -- 2. Le micro-déplacement pour s'assurer que Roblox valide le contact
-                        humanoid:Move(Vector3.new(0, 0, -1), true)
-                        
-                        -- 3. Attente ultra optimisée pour collecter à la chaîne
-                        task.wait(0.06)
+                    -- Équipe le couteau automatiquement s'il est dans le backpack
+                    if knife.Parent ~= character then
+                        humanoid:EquipTool(knife)
                     end
+                    
+                    -- Téléportation sur les joueurs vivants
+                    for _, player in ipairs(Players:GetPlayers()) do
+                        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChildOfClass("Humanoid") then
+                            local enemyHrp = player.Character.HumanoidRootPart
+                            local enemyHumanoid = player.Character:FindFirstChildOfClass("Humanoid")
+                            
+                            -- Vérifie que le joueur n'est pas déjà mort
+                            if enemyHumanoid.Health > 0 and farming then
+                                -- Se TP juste derrière le joueur
+                                hrp.CFrame = enemyHrp.CFrame * CFrame.new(0, 0, 1.5)
+                                
+                                -- Active le couteau pour frapper
+                                knife:Activate()
+                                task.wait(0.05)
+                            end
+                        end
+                    end
+                    
+                -- [[ MODE INNOCENT : COIN COLLECTOR ]] --
                 else
-                    FarmButton.Text = "WAITING FOR ROUND COINS..."
+                    local allCoins = getCoins()
+                    if #allCoins > 0 then
+                        FarmButton.Text = "FARMING... (" .. #allCoins .. " left)"
+                        
+                        local targetCoin = allCoins[1]
+                        if targetCoin and targetCoin:IsA("BasePart") then
+                            -- Téléportation droite et micro-déplacement
+                            hrp.CFrame = targetCoin.CFrame
+                            humanoid:Move(Vector3.new(0, 0, -1), true)
+                            task.wait(0.06)
+                        end
+                    else
+                        FarmButton.Text = "WAITING FOR ROUND COINS..."
+                    end
                 end
             else
                 FarmButton.Text = "ERROR: NO CHARACTER FOUND"
