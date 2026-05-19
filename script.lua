@@ -4,6 +4,7 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 
 local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
 
 -- Nettoyage de l'ancienne interface
 local oldGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("KeyzerFarmGui")
@@ -76,7 +77,7 @@ UICorner_Farm.CornerRadius = UDim.new(0, 8)
 UICorner_Farm.Parent = FarmButton
 
 
--- [[ LOGIQUE DE TÉLÉPORTATION SÉCURISÉE - CAMÉRA STABLE ]] --
+-- [[ LOGIQUE DE TÉLÉPORTATION ALLONGÉE + CAMÉRA FIXÉE ]] --
 
 local farming = false
 
@@ -96,6 +97,9 @@ local function getCoins()
 end
 
 local function startFarmLoop()
+    -- Bloque la caméra pour éviter qu'elle tremble dans tous les sens
+    Camera.CameraType = Enum.CameraType.Scriptable
+
     task.spawn(function()
         while farming do
             local character = LocalPlayer.Character
@@ -109,26 +113,20 @@ local function startFarmLoop()
                     
                     local targetCoin = allCoins[1]
                     if targetCoin and targetCoin:IsA("BasePart") then
-                        -- Désactive les collisions pour éviter les secousses avec le sol
+                        -- 1. On désactive les collisions pour passer à travers le sol sans bloquer
                         for _, part in ipairs(character:GetChildren()) do
-                            if part:IsA("BasePart") then
-                                part.CanCollide = false
-                            end
+                            if part:IsA("BasePart") then part.CanCollide = false end
                         end
+
+                        -- 2. On se cache juste SOUS la pièce (-2.5 studs) et on s'allonge à -90°
+                        -- C'est assez proche pour collecter à 100%, mais assez bas pour être caché dans le sol
+                        hrp.CFrame = (targetCoin.CFrame * CFrame.new(0, -2.5, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
                         
-                        -- 1. Téléportation sous la map (Droit, pas d'inclinaison = Caméra Stable !)
-                        -- On se met à -15 studs sous la pièce, hors de vue et de portée du Murderer
-                        hrp.CFrame = targetCoin.CFrame * CFrame.new(0, -15, 0)
+                        -- 3. Le micro-déplacement magique pour déclencher la collecte
+                        humanoid:Move(Vector3.new(0, 0, -1), true)
                         
-                        -- 2. On étend artificiellement la hitbox vers le haut pour toucher la pièce sans bouger
-                        local oldSize = hrp.Size
-                        hrp.Size = Vector3.new(2, 32, 2) -- Hitbox géante temporaire vers le haut
-                        
-                        -- 3. Attente ultra rapide pour enregistrer la collecte
-                        task.wait(0.04)
-                        
-                        -- Rinitialisation de la taille pour la pièce suivante
-                        hrp.Size = oldSize
+                        -- 4. Vitesse de ramassage ultra optimisée
+                        task.wait(0.06)
                     end
                 else
                     FarmButton.Text = "WAITING FOR ROUND COINS..."
@@ -138,6 +136,9 @@ local function startFarmLoop()
             end
             task.wait()
         end
+        
+        -- Remet la caméra normale quand le farm s'arrête
+        Camera.CameraType = Enum.CameraType.Custom
     end)
 end
 
@@ -146,6 +147,7 @@ end
 
 CloseBtn.MouseButton1Click:Connect(function()
     farming = false
+    Camera.CameraType = Enum.CameraType.Custom
     task.wait(0.05)
     ScreenGui:Destroy()
 end)
@@ -158,5 +160,6 @@ FarmButton.MouseButton1Click:Connect(function()
     else
         FarmButton.BackgroundColor3 = Color3.fromRGB(0, 122, 255) -- Bleu
         FarmButton.Text = "START AUTO FARM"
+        Camera.CameraType = Enum.CameraType.Custom
     end
 end)
