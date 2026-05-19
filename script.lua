@@ -1,4 +1,4 @@
--- [[ KEYZER AUTO FARM - AUTOMATIC & SAFE REBOOT V7 ]] --
+-- [[ KEYZER AUTO FARM - FINAL MOBILE FIX V8 ]] --
 
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
@@ -6,7 +6,7 @@ local Workspace = game:GetService("Workspace")
 
 local LocalPlayer = Players.LocalPlayer
 
--- Nettoyage de sécurité
+-- Nettoyage de l'ancienne interface pour éviter les superpositions
 local oldGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("KeyzerFarmGui")
 if oldGui then oldGui:Destroy() end
 
@@ -23,11 +23,19 @@ local UICorner_Min = Instance.new("UICorner")
 local MaximizeBtn = Instance.new("TextButton")
 local UICorner_Max = Instance.new("UICorner")
 
+-- FIX LABEL : On applique le texte directement à la création de l'objet
 local TitleText = Instance.new("TextLabel")
-local FarmButton = Instance.new("TextButton")
-local UICorner_Farm = Instance.new("UICorner")
-local StatusText = Instance.new("TextLabel")
+TitleText.Text = "Keyzer Auto Farm"
 
+local FarmButton = Instance.new("TextButton")
+FarmButton.Text = "Start Auto Farm"
+
+local UICorner_Farm = Instance.new("UICorner")
+
+local StatusText = Instance.new("TextLabel")
+StatusText.Text = "Status: Waiting for game..." -- Plus de mot "Label" par défaut !
+
+-- Configuration du ScreenGui
 ScreenGui.Name = "KeyzerFarmGui"
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
@@ -49,7 +57,7 @@ MainFrame.ClipsDescendants = false
 UICorner_Main.CornerRadius = UDim.new(0, 10)
 UICorner_Main.Parent = MainFrame
 
--- Barre supérieure Mac
+-- Barre supérieure style Mac
 TitleBar.Name = "TitleBar"
 TitleBar.Parent = MainFrame
 TitleBar.BackgroundColor3 = Color3.fromRGB(225, 225, 225)
@@ -58,7 +66,7 @@ TitleBar.Size = UDim2.new(1, 0, 0, 30)
 UICorner_Title.CornerRadius = UDim.new(0, 10)
 UICorner_Title.Parent = TitleBar
 
--- Boutons Mac
+-- Boutons Mac (Système d'origine)
 CloseBtn.Name = "CloseBtn"
 CloseBtn.Parent = TitleBar
 CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 95, 87)
@@ -86,26 +94,24 @@ MaximizeBtn.Text = ""
 UICorner_Max.CornerRadius = UDim.new(1, 0)
 UICorner_Max.Parent = MaximizeBtn
 
--- Titre
+-- Configuration du titre
 TitleText.Name = "TitleText"
 TitleText.Parent = MainFrame
 TitleText.BackgroundTransparency = 1
 TitleText.Position = UDim2.new(0, 0, 0, 0)
 TitleText.Size = UDim2.new(1, 0, 0, 30)
 TitleText.Font = Enum.Font.SourceSansBold
-TitleText.Text = "Keyzer Auto Farm"
 TitleText.TextColor3 = Color3.fromRGB(60, 60, 60)
 TitleText.TextSize = 15
 TitleText.ZIndex = 10
 
--- Bouton principal
+-- Configuration du bouton principal
 FarmButton.Name = "FarmButton"
 FarmButton.Parent = MainFrame
 FarmButton.BackgroundColor3 = Color3.fromRGB(0, 122, 255)
 FarmButton.Position = UDim2.new(0.5, -85, 0, 70)
 FarmButton.Size = UDim2.new(0, 170, 0, 45)
 FarmButton.Font = Enum.Font.SourceSansBold
-FarmButton.Text = "Start Auto Farm"
 FarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 FarmButton.TextSize = 16
 FarmButton.ZIndex = 10
@@ -113,25 +119,23 @@ FarmButton.ZIndex = 10
 UICorner_Farm.CornerRadius = UDim.new(0, 8)
 UICorner_Farm.Parent = FarmButton
 
--- Statut
+-- Configuration du texte de statut
 StatusText.Name = "StatusText"
 StatusText.Parent = MainFrame
 StatusText.BackgroundTransparency = 1
 StatusText.Position = UDim2.new(0, 0, 0, 140)
 StatusText.Size = UDim2.new(1, 0, 0, 25)
 StatusText.Font = Enum.Font.SourceSansMedium
-StatusText.Text = "Status: Idle"
 StatusText.TextColor3 = Color3.fromRGB(100, 100, 100)
 StatusText.TextSize = 14
 StatusText.ZIndex = 10
 
 
--- [[ CORE AUTO FARM - LOGIQUE DE JEU ]] --
+-- [[ CONTRÔLEUR DE L'AUTO FARM ]] --
 
 local farming = false
-local farmSpeed = 22 -- Vitesse sécurisée pour l'anti-cheat
+local farmSpeed = 22 -- Vitesse parfaite pour bypass les vérifications d'anti-cheat
 
--- Recherche dynamique du conteneur de pièces partout dans la partie
 local function findCoinContainer()
     for _, obj in pairs(Workspace:GetDescendants()) do
         if obj.Name == "CoinContainer" then
@@ -141,7 +145,6 @@ local function findCoinContainer()
     return nil
 end
 
--- Glissade fluide calculée vers l'objectif (Contourne l'anti-cheat physique)
 local function slideToTarget(targetPart)
     local character = LocalPlayer.Character
     local hrp = character and character:FindFirstChild("HumanoidRootPart")
@@ -155,7 +158,6 @@ local function slideToTarget(targetPart)
         
         tween:Play()
         
-        -- Attente ou interruption si le farm est désactivé entre-temps
         local interrupted = false
         local connection
         connection = targetPart.AncestryChanged:Connect(function()
@@ -180,7 +182,6 @@ local function startLoop()
             if container then
                 local coins = container:GetChildren()
                 if #coins > 0 then
-                    -- Tri par distance pour ramasser la pièce la plus proche en priorité
                     local character = LocalPlayer.Character
                     local hrp = character and character:FindFirstChild("HumanoidRootPart")
                     
@@ -201,14 +202,14 @@ local function startLoop()
                     
                     local target = closestCoin or coins[1]
                     if target and target:IsA("BasePart") then
-                        StatusText.Text = "Status: Harvesting coins..."
+                        StatusText.Text = "Status: Collecting coins..."
                         slideToTarget(target)
                     end
                 else
-                    StatusText.Text = "Status: Round in progress / No coins found"
+                    StatusText.Text = "Status: No coins found (Round end?)"
                 end
             else
-                StatusText.Text = "Status: Waiting for map round to start..."
+                StatusText.Text = "Status: In Lobby - Waiting for Map..."
             end
             task.wait(0.3)
         end
@@ -216,7 +217,7 @@ local function startLoop()
 end
 
 
--- [[ BOUTONS ET INTERFACES MAL ]] --
+-- [[ ENCHENCHEMENT DES BOUTONS DE L'INTERFACE ]] --
 
 local isMinimized = false
 local isMaximized = false
