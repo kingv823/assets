@@ -112,8 +112,8 @@ local function startFarmLoop()
                         -- 1. Téléportation légèrement au-dessus de la pièce
                         hrp.CFrame = targetCoin.CFrame * CFrame.new(0, 0.5, 0)
                         
-                        -- 2. Force le personnage à sauter pour déclencher la hitbox de collecte
-                        humanoid.Jump = true
+                        -- 2. Force le personnage à sauter (FIXÉ via ChangeState)
+                        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
                         
                         -- 3. Petite attente pour valider le ramassage
                         task.wait(0.3)
