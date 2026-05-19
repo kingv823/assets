@@ -76,7 +76,7 @@ UICorner_Farm.CornerRadius = UDim.new(0, 8)
 UICorner_Farm.Parent = FarmButton
 
 
--- [[ LOGIQUE DE TÉLÉPORTATION HYPER RAPIDE AVEC MICRO-DÉPLACEMENT ]] --
+-- [[ LOGIQUE DE TÉLÉPORTATION INVISIBLE (SOUS LE SOL & ALLONGÉ) ]] --
 
 local farming = false
 
@@ -109,13 +109,13 @@ local function startFarmLoop()
                     
                     local targetCoin = allCoins[1]
                     if targetCoin and targetCoin:IsA("BasePart") then
-                        -- 1. Téléportation pile sur la position de la pièce
-                        hrp.CFrame = targetCoin.CFrame
+                        -- 1. Téléportation 5 studs SOUS la pièce et inclinaison à 90° (allongé dans le sol)
+                        hrp.CFrame = (targetCoin.CFrame * CFrame.new(0, -5, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
                         
-                        -- 2. Force le personnage à avancer d'un micro-pas (simule un appui bref sur Z)
+                        -- 2. Micro pas pour forcer la hitbox à s'activer sous la map
                         humanoid:Move(Vector3.new(0, 0, -1), true)
                         
-                        -- 3. Attente minimale critique pour enchaîner à la vitesse de la lumière
+                        -- 3. Attente ultra courte pour collecter
                         task.wait(0.05)
                     end
                 else
@@ -124,7 +124,7 @@ local function startFarmLoop()
             else
                 FarmButton.Text = "ERROR: NO CHARACTER FOUND"
             end
-            task.wait() -- Vitesse maximale (cadence calée sur les FPS du jeu)
+            task.wait()
         end
     end)
 end
@@ -138,7 +138,7 @@ CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
-Button.MouseButton1Click:Connect(function()
+FarmButton.MouseButton1Click:Connect(function()
     farming = not farming
     if farming then
         FarmButton.BackgroundColor3 = Color3.fromRGB(255, 59, 48) -- Rouge
