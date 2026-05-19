@@ -1,11 +1,11 @@
--- [[ KEYZER AUTO FARM - COMPATIBILITÉ ET VISUEL V10 ]] --
+-- [[ KEYZER AUTO FARM - COIN COLLECTOR FIX V11 ]] --
 
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 
 local LocalPlayer = Players.LocalPlayer
 
--- Nettoyage de l'ancienne interface pour repartir sur du propre
+-- Nettoyage de l'ancienne interface
 local oldGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("KeyzerFarmGui")
 if oldGui then oldGui:Destroy() end
 
@@ -38,7 +38,7 @@ local UICorner_Title = Instance.new("UICorner")
 UICorner_Title.CornerRadius = UDim.new(0, 10)
 UICorner_Title.Parent = TitleBar
 
--- Boutons de fermeture rapides
+-- Bouton fermeture
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Parent = TitleBar
 CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 95, 87)
@@ -49,7 +49,7 @@ local UICorner_C = Instance.new("UICorner")
 UICorner_C.CornerRadius = UDim.new(1, 0)
 UICorner_C.Parent = CloseBtn
 
--- Titre principal (Configuration sécurisée)
+-- Titre
 local TitleText = Instance.new("TextLabel")
 TitleText.Parent = TitleBar
 TitleText.BackgroundTransparency = 1
@@ -57,10 +57,9 @@ TitleText.Size = UDim2.new(1, 0, 1, 0)
 TitleText.Font = Enum.Font.SourceSansBold
 TitleText.TextColor3 = Color3.fromRGB(60, 60, 60)
 TitleText.TextSize = 14
-TitleText.Text = "Keyzer Auto Farm v10"
+TitleText.Text = "Keyzer Auto Farm v11"
 
--- === LE BOUTON UNIQUE (START / STATUT REGROUPÉS) ===
--- Pour éradiquer le bug du "Label", on utilise le bouton lui-même pour afficher les messages !
+-- Bouton unique
 local FarmButton = Instance.new("TextButton")
 FarmButton.Name = "FarmButton"
 FarmButton.Parent = MainFrame
@@ -77,18 +76,16 @@ UICorner_Farm.CornerRadius = UDim.new(0, 8)
 UICorner_Farm.Parent = FarmButton
 
 
--- [[ LOGIQUE DE TÉLÉPORTATION DIRECTE (ANTI-LAG) ]] --
+-- [[ LOGIQUE DE TÉLÉPORTATION AVEC SAUT AUTOMATIQUE ]] --
 
 local farming = false
 
--- Fonction de recherche optimisée pour MM2
 local function getCoins()
     local container = Workspace:FindFirstChild("CoinContainer", true)
     if container then
         return container:GetChildren()
     end
     
-    -- Alternative si le conteneur principal est caché dans la map active
     local map = Workspace:FindFirstChild("Map") or Workspace:FindFirstChild("Normal")
     if map then
         local coinFolder = map:FindFirstChild("CoinContainer", true)
@@ -103,18 +100,23 @@ local function startFarmLoop()
         while farming do
             local character = LocalPlayer.Character
             local hrp = character and character:FindFirstChild("HumanoidRootPart")
+            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
             
-            if hrp then
+            if hrp and humanoid then
                 local allCoins = getCoins()
                 if #allCoins > 0 then
                     FarmButton.Text = "FARMING... (" .. #allCoins .. " left)"
                     
-                    -- Sélection de la première pièce disponible
                     local targetCoin = allCoins[1]
                     if targetCoin and targetCoin:IsA("BasePart") then
-                        -- Téléportation directe juste au-dessus de la pièce pour la collecter
-                        hrp.CFrame = targetCoin.CFrame * CFrame.new(0, 1, 0)
-                        task.wait(0.3) -- Délai de sécurité pour laisser le temps au jeu d'enregistrer la pièce
+                        -- 1. Téléportation légèrement au-dessus de la pièce
+                        hrp.CFrame = targetCoin.CFrame * CFrame.new(0, 0.5, 0)
+                        
+                        -- 2. Force le personnage à sauter pour déclencher la hitbox de collecte
+                        humanoid.Jump = true
+                        
+                        -- 3. Petite attente pour valider le ramassage
+                        task.wait(0.3)
                     end
                 else
                     FarmButton.Text = "WAITING FOR ROUND COINS..."
@@ -122,7 +124,7 @@ local function startFarmLoop()
             else
                 FarmButton.Text = "ERROR: NO CHARACTER FOUND"
             end
-            task.wait(0.2)
+            task.wait(0.1)
         end
     end)
 end
@@ -139,10 +141,10 @@ end)
 FarmButton.MouseButton1Click:Connect(function()
     farming = not farming
     if farming then
-        FarmButton.BackgroundColor3 = Color3.fromRGB(255, 59, 48) -- Passe en rouge
+        FarmButton.BackgroundColor3 = Color3.fromRGB(255, 59, 48) -- Rouge
         startFarmLoop()
     else
-        FarmButton.BackgroundColor3 = Color3.fromRGB(0, 122, 255) -- Repasse en bleu
+        FarmButton.BackgroundColor3 = Color3.fromRGB(0, 122, 255) -- Bleu
         FarmButton.Text = "START AUTO FARM"
     end
 end)
