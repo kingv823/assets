@@ -124,7 +124,6 @@ local function startFarmLoop()
             local humanoid = character and character:FindFirstChildOfClass("Humanoid")
             
             if hrp and humanoid then
-                -- [[ FIX DE LA POSITION ALLONGÉE ]]
                 -- Supprime les forces physiques résiduelles et force l'état DEBOUT
                 hrp.RotVelocity = Vector3.new(0, 0, 0)
                 hrp.Velocity = Vector3.new(0, 0, 0)
@@ -136,22 +135,18 @@ local function startFarmLoop()
                 if knife then
                     FarmButton.Text = "MURDER MODE: KILLING ALL..."
                     
-                    -- Équipe le couteau de force
                     if knife.Parent ~= character then
                         humanoid:EquipTool(knife)
                     end
                     
-                    -- Active le couteau en boucle
                     knife:Activate()
                     
-                    -- Se téléporte derrière chaque joueur vivant
                     for _, player in ipairs(Players:GetPlayers()) do
                         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChildOfClass("Humanoid") then
                             local enemyHrp = player.Character.HumanoidRootPart
                             local enemyHumanoid = player.Character:FindFirstChildOfClass("Humanoid")
                             
                             if enemyHumanoid.Health > 0 and farming then
-                                -- Téléportation droite parfaite (Position uniquement, angle par défaut du jeu)
                                 hrp.CFrame = CFrame.new(enemyHrp.Position) * CFrame.new(0, 0, 1.2)
                                 task.wait(0.04)
                             end
@@ -166,19 +161,20 @@ local function startFarmLoop()
                         
                         local targetCoin = allCoins[1]
                         if targetCoin and targetCoin:IsA("BasePart") then
-                            -- Téléportation droite parfaite à la position de la pièce
                             hrp.CFrame = CFrame.new(targetCoin.Position)
-                            
-                            -- Micro pas en avant pour valider
                             humanoid:Move(Vector3.new(0, 0, -1), true)
                             task.wait(0.06)
                         end
                     else
                         FarmButton.Text = "WAITING FOR ROUND COINS..."
+                        -- AJUSTEMENT : On attend un tout petit peu sans téléporter 
+                        -- pour laisser le joueur bouger librement sur la map
+                        task.wait(0.5) 
                     end
                 end
             else
                 FarmButton.Text = "ERROR: NO CHARACTER FOUND"
+                task.wait(0.5)
             end
             task.wait()
         end
