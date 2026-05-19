@@ -109,11 +109,11 @@ local function startFarmLoop()
                     
                     local targetCoin = allCoins[1]
                     if targetCoin and targetCoin:IsA("BasePart") then
-                        -- 1. Téléportation légèrement au-dessus de la pièce
-                        hrp.CFrame = targetCoin.CFrame * CFrame.new(0, 0.5, 0)
+                        -- 1. Téléportation pile sur la pièce (hauteur 0 pour toucher le sol)
+                        hrp.CFrame = targetCoin.CFrame * CFrame.new(0, 0, 0)
                         
-                        -- 2. Force le personnage à sauter (FIXÉ via ChangeState)
-                        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                        -- 2. Force le personnage à faire un micro-pas en avant (comme un clic sur Z)
+                        humanoid:Move(Vector3.new(0, 0, -1), true)
                         
                         -- 3. Petite attente pour valider le ramassage
                         task.wait(0.3)
