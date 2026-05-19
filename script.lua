@@ -4,7 +4,6 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 
 local LocalPlayer = Players.LocalPlayer
-local Camera = Workspace.CurrentCamera
 
 -- Nettoyage de l'ancienne interface
 local oldGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("KeyzerFarmGui")
@@ -77,7 +76,7 @@ UICorner_Farm.CornerRadius = UDim.new(0, 8)
 UICorner_Farm.Parent = FarmButton
 
 
--- [[ LOGIQUE DE TÉLÉPORTATION ALLONGÉE + CAMÉRA FIXÉE ]] --
+-- [[ LOGIQUE DE TÉLÉPORTATION ALLONGÉE ENTRE LA PIÈCE ET LE SOL ]] --
 
 local farming = false
 
@@ -97,9 +96,6 @@ local function getCoins()
 end
 
 local function startFarmLoop()
-    -- Bloque la caméra pour éviter qu'elle tremble dans tous les sens
-    Camera.CameraType = Enum.CameraType.Scriptable
-
     task.spawn(function()
         while farming do
             local character = LocalPlayer.Character
@@ -113,19 +109,14 @@ local function startFarmLoop()
                     
                     local targetCoin = allCoins[1]
                     if targetCoin and targetCoin:IsA("BasePart") then
-                        -- 1. On désactive les collisions pour passer à travers le sol sans bloquer
-                        for _, part in ipairs(character:GetChildren()) do
-                            if part:IsA("BasePart") then part.CanCollide = false end
-                        end
-
-                        -- 2. On se cache juste SOUS la pièce (-2.5 studs) et on s'allonge à -90°
-                        -- C'est assez proche pour collecter à 100%, mais assez bas pour être caché dans le sol
-                        hrp.CFrame = (targetCoin.CFrame * CFrame.new(0, -2.5, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
+                        -- 1. On couche le personnage à plat ventre (-90 degrés)
+                        -- et on le colle contre le sol, juste sous la pièce (hauteur ajustée à -0.5)
+                        hrp.CFrame = (targetCoin.CFrame * CFrame.new(0, -0.5, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
                         
-                        -- 3. Le micro-déplacement magique pour déclencher la collecte
+                        -- 2. Le micro-déplacement (coup de Z) pour forcer le ramassage immédiat
                         humanoid:Move(Vector3.new(0, 0, -1), true)
                         
-                        -- 4. Vitesse de ramassage ultra optimisée
+                        -- 3. Vitesse maximale de ramassage
                         task.wait(0.06)
                     end
                 else
@@ -136,9 +127,6 @@ local function startFarmLoop()
             end
             task.wait()
         end
-        
-        -- Remet la caméra normale quand le farm s'arrête
-        Camera.CameraType = Enum.CameraType.Custom
     end)
 end
 
@@ -147,7 +135,6 @@ end
 
 CloseBtn.MouseButton1Click:Connect(function()
     farming = false
-    Camera.CameraType = Enum.CameraType.Custom
     task.wait(0.05)
     ScreenGui:Destroy()
 end)
@@ -160,6 +147,5 @@ FarmButton.MouseButton1Click:Connect(function()
     else
         FarmButton.BackgroundColor3 = Color3.fromRGB(0, 122, 255) -- Bleu
         FarmButton.Text = "START AUTO FARM"
-        Camera.CameraType = Enum.CameraType.Custom
     end
 end)
