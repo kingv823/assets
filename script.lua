@@ -1,12 +1,11 @@
--- [[ KEYZER AUTO FARM - THE REAL FIX V9 ]] --
+-- [[ KEYZER AUTO FARM - COMPATIBILITÉ ET VISUEL V10 ]] --
 
-local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 
 local LocalPlayer = Players.LocalPlayer
 
--- Nettoyage des anciennes interfaces
+-- Nettoyage de l'ancienne interface pour repartir sur du propre
 local oldGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("KeyzerFarmGui")
 if oldGui then oldGui:Destroy() end
 
@@ -20,10 +19,9 @@ MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
 MainFrame.Position = UDim2.new(0.5, -175, 0.4, -100)
-MainFrame.Size = UDim2.new(0, 350, 0, 200)
+MainFrame.Size = UDim2.new(0, 350, 0, 180)
 MainFrame.Active = true
 MainFrame.Draggable = true
-MainFrame.ClipsDescendants = false
 
 local UICorner_Main = Instance.new("UICorner")
 UICorner_Main.CornerRadius = UDim.new(0, 10)
@@ -40,131 +38,89 @@ local UICorner_Title = Instance.new("UICorner")
 UICorner_Title.CornerRadius = UDim.new(0, 10)
 UICorner_Title.Parent = TitleBar
 
--- Boutons Mac Système
+-- Boutons de fermeture rapides
 local CloseBtn = Instance.new("TextButton")
-CloseBtn.Name = "CloseBtn"
 CloseBtn.Parent = TitleBar
 CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 95, 87)
 CloseBtn.Position = UDim2.new(0, 12, 0, 8)
 CloseBtn.Size = UDim2.new(0, 13, 0, 13)
 CloseBtn.Text = ""
+local UICorner_C = Instance.new("UICorner")
+UICorner_C.CornerRadius = UDim.new(1, 0)
+UICorner_C.Parent = CloseBtn
 
-local UICorner_Close = Instance.new("UICorner")
-UICorner_Close.CornerRadius = UDim.new(1, 0)
-UICorner_Close.Parent = CloseBtn
-
-local MinimizeBtn = Instance.new("TextButton")
-MinimizeBtn.Name = "MinimizeBtn"
-MinimizeBtn.Parent = TitleBar
-MinimizeBtn.BackgroundColor3 = Color3.fromRGB(254, 188, 46)
-MinimizeBtn.Position = UDim2.new(0, 32, 0, 8)
-MinimizeBtn.Size = UDim2.new(0, 13, 0, 13)
-MinimizeBtn.Text = ""
-
-local UICorner_Min = Instance.new("UICorner")
-UICorner_Min.CornerRadius = UDim.new(1, 0)
-UICorner_Min.Parent = MinimizeBtn
-
-local MaximizeBtn = Instance.new("TextButton")
-MaximizeBtn.Name = "MaximizeBtn"
-MaximizeBtn.Parent = TitleBar
-MaximizeBtn.BackgroundColor3 = Color3.fromRGB(40, 200, 64)
-MaximizeBtn.Position = UDim2.new(0, 52, 0, 8)
-MaximizeBtn.Size = UDim2.new(0, 13, 0, 13)
-MaximizeBtn.Text = ""
-
-local UICorner_Max = Instance.new("UICorner")
-UICorner_Max.CornerRadius = UDim.new(1, 0)
-UICorner_Max.Parent = MaximizeBtn
-
--- Application des Textes AVEC Parent défini en premier (Bloque le bug du "Label")
+-- Titre principal (Configuration sécurisée)
 local TitleText = Instance.new("TextLabel")
-TitleText.Name = "TitleText"
-TitleText.Parent = MainFrame
+TitleText.Parent = TitleBar
 TitleText.BackgroundTransparency = 1
-TitleText.Position = UDim2.new(0, 0, 0, 0)
-TitleText.Size = UDim2.new(1, 0, 0, 30)
+TitleText.Size = UDim2.new(1, 0, 1, 0)
 TitleText.Font = Enum.Font.SourceSansBold
 TitleText.TextColor3 = Color3.fromRGB(60, 60, 60)
-TitleText.TextSize = 15
-TitleText.ZIndex = 10
-TitleText.Text = "Keyzer Auto Farm"
+TitleText.TextSize = 14
+TitleText.Text = "Keyzer Auto Farm v10"
 
+-- === LE BOUTON UNIQUE (START / STATUT REGROUPÉS) ===
+-- Pour éradiquer le bug du "Label", on utilise le bouton lui-même pour afficher les messages !
 local FarmButton = Instance.new("TextButton")
 FarmButton.Name = "FarmButton"
 FarmButton.Parent = MainFrame
 FarmButton.BackgroundColor3 = Color3.fromRGB(0, 122, 255)
-FarmButton.Position = UDim2.new(0.5, -85, 0, 70)
-FarmButton.Size = UDim2.new(0, 170, 0, 45)
+FarmButton.Position = UDim2.new(0.5, -100, 0, 65)
+FarmButton.Size = UDim2.new(0, 200, 0, 50)
 FarmButton.Font = Enum.Font.SourceSansBold
 FarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 FarmButton.TextSize = 16
-FarmButton.ZIndex = 10
-FarmButton.Text = "Start Auto Farm"
+FarmButton.Text = "START AUTO FARM"
 
 local UICorner_Farm = Instance.new("UICorner")
 UICorner_Farm.CornerRadius = UDim.new(0, 8)
 UICorner_Farm.Parent = FarmButton
 
-local StatusText = Instance.new("TextLabel")
-StatusText.Name = "StatusText"
-StatusText.Parent = MainFrame
-StatusText.BackgroundTransparency = 1
-StatusText.Position = UDim2.new(0, 0, 0, 140)
-StatusText.Size = UDim2.new(1, 0, 0, 25)
-StatusText.Font = Enum.Font.SourceSansMedium
-StatusText.TextColor3 = Color3.fromRGB(100, 100, 100)
-StatusText.TextSize = 14
-StatusText.ZIndex = 10
-StatusText.Text = "Status: Idle (Ready)"
 
-
--- [[ SCRIPT DE GLISSADE REVISITÉ ]] --
+-- [[ LOGIQUE DE TÉLÉPORTATION DIRECTE (ANTI-LAG) ]] --
 
 local farming = false
-local speed = 30
 
-local function getCoinContainer()
-    for _, desc in pairs(Workspace:GetDescendants()) do
-        if desc.Name == "CoinContainer" then
-            return desc
-        end
+-- Fonction de recherche optimisée pour MM2
+local function getCoins()
+    local container = Workspace:FindFirstChild("CoinContainer", true)
+    if container then
+        return container:GetChildren()
     end
-    return nil
-end
-
--- Glissade par CFrame linéaire (Plus stable sur Android/Émulateur)
-local function teleportToCoin(target)
-    local char = LocalPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
     
-    if hrp and target and target:IsA("BasePart") then
-        while farming and target.Parent and (hrp.Position - target.Position).Magnitude > 2 do
-            local dir = (target.Position - hrp.Position).Unit
-            hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0) -- Stop la gravité pour éviter les kicks physiques
-            hrp.CFrame = hrp.CFrame + (dir * (speed * task.wait()))
-        end
+    -- Alternative si le conteneur principal est caché dans la map active
+    local map = Workspace:FindFirstChild("Map") or Workspace:FindFirstChild("Normal")
+    if map then
+        local coinFolder = map:FindFirstChild("CoinContainer", true)
+        if coinFolder then return coinFolder:GetChildren() end
     end
+    
+    return {}
 end
 
-local function farmLoop()
+local function startFarmLoop()
     task.spawn(function()
         while farming do
-            local container = getCoinContainer()
-            if container then
-                local coins = container:GetChildren()
-                if #coins > 0 then
-                    StatusText.Text = "Status: Collecting coins..."
-                    -- Prend la première pièce dispo
-                    local target = coins[1]
-                    if target and target:IsA("BasePart") then
-                        teleportToCoin(target)
+            local character = LocalPlayer.Character
+            local hrp = character and character:FindFirstChild("HumanoidRootPart")
+            
+            if hrp then
+                local allCoins = getCoins()
+                if #allCoins > 0 then
+                    FarmButton.Text = "FARMING... (" .. #allCoins .. " left)"
+                    
+                    -- Sélection de la première pièce disponible
+                    local targetCoin = allCoins[1]
+                    if targetCoin and targetCoin:IsA("BasePart") then
+                        -- Téléportation directe juste au-dessus de la pièce pour la collecter
+                        hrp.CFrame = targetCoin.CFrame * CFrame.new(0, 1, 0)
+                        task.wait(0.3) -- Délai de sécurité pour laisser le temps au jeu d'enregistrer la pièce
                     end
                 else
-                    StatusText.Text = "Status: No coins found (Lobby?)"
+                    FarmButton.Text = "WAITING FOR ROUND COINS..."
                 end
             else
-                StatusText.Text = "Status: In Lobby - Waiting for Round"
+                FarmButton.Text = "ERROR: NO CHARACTER FOUND"
             end
             task.wait(0.2)
         end
@@ -172,10 +128,7 @@ local function farmLoop()
 end
 
 
--- [[ LOGIQUE DES BOUTONS ]] --
-
-local isMinimized = false
-local isMaximized = false
+-- [[ ENCLENCHEMENT DES BOUTONS ]] --
 
 CloseBtn.MouseButton1Click:Connect(function()
     farming = false
@@ -183,43 +136,13 @@ CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
-MinimizeBtn.MouseButton1Click:Connect(function()
-    if isMaximized then return end
-    isMinimized = not isMinimized
-    FarmButton.Visible = not isMinimized
-    StatusText.Visible = not isMinimized
-    local targetSize = isMinimized and UDim2.new(0, 350, 0, 30) or UDim2.new(0, 350, 0, 200)
-    TweenService:Create(MainFrame, TweenInfo.new(0.2), {Size = targetSize}):Play()
-end)
-
-MaximizeBtn.MouseButton1Click:Connect(function()
-    if isMinimized then return end
-    isMaximized = not isMaximized
-    local targetSize = isMaximized and UDim2.new(0, 550, 0, 350) or UDim2.new(0, 350, 0, 200)
-    local targetPos = isMaximized and UDim2.new(0.5, -275, 0.4, -175) or UDim2.new(0.5, -175, 0.4, -100)
-    TweenService:Create(MainFrame, TweenInfo.new(0.2), {Size = targetSize, Position = targetPos}):Play()
-    
-    if isMaximized then
-        FarmButton.Position = UDim2.new(0.5, -90, 0, 130)
-        StatusText.Position = UDim2.new(0, 0, 0, 260)
-    else
-        FarmButton.Position = UDim2.new(0.5, -85, 0, 70)
-        StatusText.Position = UDim2.new(0, 0, 0, 140)
-    end
-end)
-
 FarmButton.MouseButton1Click:Connect(function()
     farming = not farming
     if farming then
-        FarmButton.Text = "Stop Auto Farm"
-        FarmButton.BackgroundColor3 = Color3.fromRGB(255, 59, 48)
-        StatusText.Text = "Status: Farm Active"
-        StatusText.TextColor3 = Color3.fromRGB(40, 200, 64)
-        farmLoop()
+        FarmButton.BackgroundColor3 = Color3.fromRGB(255, 59, 48) -- Passe en rouge
+        startFarmLoop()
     else
-        FarmButton.Text = "Start Auto Farm"
-        FarmButton.BackgroundColor3 = Color3.fromRGB(0, 122, 255)
-        StatusText.Text = "Status: Idle"
-        StatusText.TextColor3 = Color3.fromRGB(100, 100, 100)
+        FarmButton.BackgroundColor3 = Color3.fromRGB(0, 122, 255) -- Repasse en bleu
+        FarmButton.Text = "START AUTO FARM"
     end
 end)
