@@ -93,12 +93,12 @@ local function getCoins()
     return {}
 end
 
--- Détection améliorée du couteau (cherche "Knife" ou n'importe quel outil de type arme)
+-- Détection absolue du couteau MM2 (par le nom de l'item ou ses scripts internes)
 local function getKnife()
     local char = LocalPlayer.Character
     if char then
         for _, item in ipairs(char:GetChildren()) do
-            if item:IsA("Tool") and (item.Name:lower():find("knife") or item.Name:lower():find("couteau")) then
+            if item:IsA("Tool") and (item.Name:lower():find("knife") or item:FindFirstChild("KnifeLocal") or item:FindFirstChild("KnifeServer")) then
                 return item
             end
         end
@@ -107,7 +107,7 @@ local function getKnife()
     local backpack = LocalPlayer:FindFirstChild("Backpack")
     if backpack then
         for _, item in ipairs(backpack:GetChildren()) do
-            if item:IsA("Tool") and (item.Name:lower():find("knife") or item.Name:lower():find("couteau")) then
+            if item:IsA("Tool") and (item.Name:lower():find("knife") or item:FindFirstChild("KnifeLocal") or item:FindFirstChild("KnifeServer")) then
                 return item
             end
         end
@@ -124,8 +124,11 @@ local function startFarmLoop()
             local humanoid = character and character:FindFirstChildOfClass("Humanoid")
             
             if hrp and humanoid then
-                -- Force le personnage à se remettre DROIT au cas où il bug
+                -- [[ FIX DE LA POSITION ALLONGÉE ]]
+                -- Supprime les forces physiques résiduelles et force l'état DEBOUT
                 hrp.RotVelocity = Vector3.new(0, 0, 0)
+                hrp.Velocity = Vector3.new(0, 0, 0)
+                humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
                 
                 local knife = getKnife()
                 
@@ -133,12 +136,12 @@ local function startFarmLoop()
                 if knife then
                     FarmButton.Text = "MURDER MODE: KILLING ALL..."
                     
-                    -- Équipe le couteau s'il est dans le sac
+                    -- Équipe le couteau de force
                     if knife.Parent ~= character then
                         humanoid:EquipTool(knife)
                     end
                     
-                    -- Attaque automatique en boucle
+                    -- Active le couteau en boucle
                     knife:Activate()
                     
                     -- Se téléporte derrière chaque joueur vivant
@@ -148,9 +151,9 @@ local function startFarmLoop()
                             local enemyHumanoid = player.Character:FindFirstChildOfClass("Humanoid")
                             
                             if enemyHumanoid.Health > 0 and farming then
-                                -- Téléportation STRICTEMENT DROITE juste derrière la cible
+                                -- Téléportation droite parfaite (Position uniquement, angle par défaut du jeu)
                                 hrp.CFrame = CFrame.new(enemyHrp.Position) * CFrame.new(0, 0, 1.2)
-                                task.wait(0.04) -- Vitesse de massacre
+                                task.wait(0.04)
                             end
                         end
                     end
@@ -163,10 +166,10 @@ local function startFarmLoop()
                         
                         local targetCoin = allCoins[1]
                         if targetCoin and targetCoin:IsA("BasePart") then
-                            -- Téléportation STRICTEMENT DROITE pile sur la pièce (sans aucune rotation résiduelle)
+                            -- Téléportation droite parfaite à la position de la pièce
                             hrp.CFrame = CFrame.new(targetCoin.Position)
                             
-                            -- Avance d'un micro pas
+                            -- Micro pas en avant pour valider
                             humanoid:Move(Vector3.new(0, 0, -1), true)
                             task.wait(0.06)
                         end
