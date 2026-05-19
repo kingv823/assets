@@ -76,7 +76,7 @@ UICorner_Farm.CornerRadius = UDim.new(0, 8)
 UICorner_Farm.Parent = FarmButton
 
 
--- [[ LOGIQUE DE TÉLÉPORTATION ALLONGÉE ENTRE LA PIÈCE ET LE SOL ]] --
+-- [[ LOGIQUE DE TÉLÉPORTATION ALLONGÉE DIRECTEMENT SUR LA PIÈCE ]] --
 
 local farming = false
 
@@ -109,14 +109,14 @@ local function startFarmLoop()
                     
                     local targetCoin = allCoins[1]
                     if targetCoin and targetCoin:IsA("BasePart") then
-                        -- 1. On couche le personnage à plat ventre (-90 degrés)
-                        -- et on le colle contre le sol, juste sous la pièce (hauteur ajustée à -0.5)
-                        hrp.CFrame = (targetCoin.CFrame * CFrame.new(0, -0.5, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
+                        -- 1. Téléportation PILE sur la pièce ET inclinaison à plat ventre (-90°)
+                        -- Le perso est fusionné avec la pièce, impossible de la rater
+                        hrp.CFrame = targetCoin.CFrame * CFrame.Angles(math.rad(-90), 0, 0)
                         
-                        -- 2. Le micro-déplacement (coup de Z) pour forcer le ramassage immédiat
+                        -- 2. Le micro-déplacement pour s'assurer que Roblox valide le contact
                         humanoid:Move(Vector3.new(0, 0, -1), true)
                         
-                        -- 3. Vitesse maximale de ramassage
+                        -- 3. Attente ultra optimisée pour collecter à la chaîne
                         task.wait(0.06)
                     end
                 else
