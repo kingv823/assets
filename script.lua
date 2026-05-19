@@ -76,7 +76,7 @@ UICorner_Farm.CornerRadius = UDim.new(0, 8)
 UICorner_Farm.Parent = FarmButton
 
 
--- [[ LOGIQUE DE TÉLÉPORTATION AVEC SAUT AUTOMATIQUE ]] --
+-- [[ LOGIQUE DE TÉLÉPORTATION AVEC MICRO-DÉPLACEMENT ]] --
 
 local farming = false
 
@@ -109,10 +109,10 @@ local function startFarmLoop()
                     
                     local targetCoin = allCoins[1]
                     if targetCoin and targetCoin:IsA("BasePart") then
-                        -- 1. Téléportation pile sur la pièce (hauteur 0 pour toucher le sol)
-                        hrp.CFrame = targetCoin.CFrame * CFrame.new(0, 0, 0)
+                        -- 1. Téléportation pile sur la position de la pièce
+                        hrp.CFrame = targetCoin.CFrame
                         
-                        -- 2. Force le personnage à faire un micro-pas en avant (comme un clic sur Z)
+                        -- 2. Force le personnage à avancer d'un micro-pas (simule un appui bref sur Z)
                         humanoid:Move(Vector3.new(0, 0, -1), true)
                         
                         -- 3. Petite attente pour valider le ramassage
