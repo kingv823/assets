@@ -76,7 +76,7 @@ UICorner_Farm.CornerRadius = UDim.new(0, 8)
 UICorner_Farm.Parent = FarmButton
 
 
--- [[ LOGIQUE DE TÉLÉPORTATION INVISIBLE (SOUS LE SOL & ALLONGÉ) ]] --
+-- [[ LOGIQUE DE TÉLÉPORTATION SÉCURISÉE - CAMÉRA STABLE ]] --
 
 local farming = false
 
@@ -109,14 +109,26 @@ local function startFarmLoop()
                     
                     local targetCoin = allCoins[1]
                     if targetCoin and targetCoin:IsA("BasePart") then
-                        -- 1. Téléportation 5 studs SOUS la pièce et inclinaison à 90° (allongé dans le sol)
-                        hrp.CFrame = (targetCoin.CFrame * CFrame.new(0, -5, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
+                        -- Désactive les collisions pour éviter les secousses avec le sol
+                        for _, part in ipairs(character:GetChildren()) do
+                            if part:IsA("BasePart") then
+                                part.CanCollide = false
+                            end
+                        end
                         
-                        -- 2. Micro pas pour forcer la hitbox à s'activer sous la map
-                        humanoid:Move(Vector3.new(0, 0, -1), true)
+                        -- 1. Téléportation sous la map (Droit, pas d'inclinaison = Caméra Stable !)
+                        -- On se met à -15 studs sous la pièce, hors de vue et de portée du Murderer
+                        hrp.CFrame = targetCoin.CFrame * CFrame.new(0, -15, 0)
                         
-                        -- 3. Attente ultra courte pour collecter
-                        task.wait(0.05)
+                        -- 2. On étend artificiellement la hitbox vers le haut pour toucher la pièce sans bouger
+                        local oldSize = hrp.Size
+                        hrp.Size = Vector3.new(2, 32, 2) -- Hitbox géante temporaire vers le haut
+                        
+                        -- 3. Attente ultra rapide pour enregistrer la collecte
+                        task.wait(0.04)
+                        
+                        -- Rinitialisation de la taille pour la pièce suivante
+                        hrp.Size = oldSize
                     end
                 else
                     FarmButton.Text = "WAITING FOR ROUND COINS..."
