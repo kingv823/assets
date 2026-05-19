@@ -76,7 +76,7 @@ UICorner_Farm.CornerRadius = UDim.new(0, 8)
 UICorner_Farm.Parent = FarmButton
 
 
--- [[ LOGIQUE DE DETECTION ET MÉTHODES ]] --
+-- [[ LOGIQUE DE DETECTION ET METHODES ]] --
 
 local farming = false
 
@@ -93,18 +93,24 @@ local function getCoins()
     return {}
 end
 
--- Trouver le couteau (dans le perso ou l'inventaire)
+-- Détection améliorée du couteau (cherche "Knife" ou n'importe quel outil de type arme)
 local function getKnife()
     local char = LocalPlayer.Character
     if char then
-        local knife = char:FindFirstChild("Knife") or char:FindFirstChild("Couteau")
-        if knife and knife:IsA("Tool") then return knife end
+        for _, item in ipairs(char:GetChildren()) do
+            if item:IsA("Tool") and (item.Name:lower():find("knife") or item.Name:lower():find("couteau")) then
+                return item
+            end
+        end
     end
     
     local backpack = LocalPlayer:FindFirstChild("Backpack")
     if backpack then
-        local knife = backpack:FindFirstChild("Knife") or backpack:FindFirstChild("Couteau")
-        if knife and knife:IsA("Tool") then return knife end
+        for _, item in ipairs(backpack:GetChildren()) do
+            if item:IsA("Tool") and (item.Name:lower():find("knife") or item.Name:lower():find("couteau")) then
+                return item
+            end
+        end
     end
     return nil
 end
@@ -118,31 +124,33 @@ local function startFarmLoop()
             local humanoid = character and character:FindFirstChildOfClass("Humanoid")
             
             if hrp and humanoid then
+                -- Force le personnage à se remettre DROIT au cas où il bug
+                hrp.RotVelocity = Vector3.new(0, 0, 0)
+                
                 local knife = getKnife()
                 
                 -- [[ MODE MURDERER : AUTO KILL ]] --
                 if knife then
                     FarmButton.Text = "MURDER MODE: KILLING ALL..."
                     
-                    -- Équipe le couteau automatiquement s'il est dans le backpack
+                    -- Équipe le couteau s'il est dans le sac
                     if knife.Parent ~= character then
                         humanoid:EquipTool(knife)
                     end
                     
-                    -- Téléportation sur les joueurs vivants
+                    -- Attaque automatique en boucle
+                    knife:Activate()
+                    
+                    -- Se téléporte derrière chaque joueur vivant
                     for _, player in ipairs(Players:GetPlayers()) do
                         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChildOfClass("Humanoid") then
                             local enemyHrp = player.Character.HumanoidRootPart
                             local enemyHumanoid = player.Character:FindFirstChildOfClass("Humanoid")
                             
-                            -- Vérifie que le joueur n'est pas déjà mort
                             if enemyHumanoid.Health > 0 and farming then
-                                -- Se TP juste derrière le joueur
-                                hrp.CFrame = enemyHrp.CFrame * CFrame.new(0, 0, 1.5)
-                                
-                                -- Active le couteau pour frapper
-                                knife:Activate()
-                                task.wait(0.05)
+                                -- Téléportation STRICTEMENT DROITE juste derrière la cible
+                                hrp.CFrame = CFrame.new(enemyHrp.Position) * CFrame.new(0, 0, 1.2)
+                                task.wait(0.04) -- Vitesse de massacre
                             end
                         end
                     end
@@ -155,8 +163,10 @@ local function startFarmLoop()
                         
                         local targetCoin = allCoins[1]
                         if targetCoin and targetCoin:IsA("BasePart") then
-                            -- Téléportation droite et micro-déplacement
-                            hrp.CFrame = targetCoin.CFrame
+                            -- Téléportation STRICTEMENT DROITE pile sur la pièce (sans aucune rotation résiduelle)
+                            hrp.CFrame = CFrame.new(targetCoin.Position)
+                            
+                            -- Avance d'un micro pas
                             humanoid:Move(Vector3.new(0, 0, -1), true)
                             task.wait(0.06)
                         end
