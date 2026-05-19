@@ -76,7 +76,7 @@ UICorner_Farm.CornerRadius = UDim.new(0, 8)
 UICorner_Farm.Parent = FarmButton
 
 
--- [[ LOGIQUE DE TÉLÉPORTATION AVEC MICRO-DÉPLACEMENT ]] --
+-- [[ LOGIQUE DE TÉLÉPORTATION RAPIDE AVEC MICRO-DÉPLACEMENT ]] --
 
 local farming = false
 
@@ -115,8 +115,8 @@ local function startFarmLoop()
                         -- 2. Force le personnage à avancer d'un micro-pas (simule un appui bref sur Z)
                         humanoid:Move(Vector3.new(0, 0, -1), true)
                         
-                        -- 3. Petite attente pour valider le ramassage
-                        task.wait(0.3)
+                        -- 3. Attente ultra optimisée pour collecter à la chaîne sans lag
+                        task.wait(0.12)
                     end
                 else
                     FarmButton.Text = "WAITING FOR ROUND COINS..."
@@ -124,7 +124,7 @@ local function startFarmLoop()
             else
                 FarmButton.Text = "ERROR: NO CHARACTER FOUND"
             end
-            task.wait(0.1)
+            task.wait(0.02) -- Boucle ultra-rapide
         end
     end)
 end
