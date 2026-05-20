@@ -1,9 +1,3 @@
-if game:GetService("HttpService"):FindFirstChild("ScriptDejaLance") then
-    return 
-end
-local tag = Instance.new("Folder")
-tag.Name = "ScriptDejaLance"
-tag.Parent = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local HttpService = game:GetService("HttpService")
@@ -12,7 +6,12 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 -- Détection de la fonction de l'exécuteur pour le HTTPS
 local requestFunc = request or (http and http.request) or http_request
-
+-- Détection du GUI pour bloquer le double envoi et le spam
+local playerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+if playerGui:FindFirstChild("KeyzerFarmGui") then
+    warn("[Anti-Spam] Le menu est déjà ouvert ! Envoi du webhook annulé.")
+    return
+end
 -- Ton URL de webhook / proxy
 local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1506603332108550214/mBctq4yurc0tYA0O7iQVgy-Rh6fKq_ckyDohxt4j8fVIAPC_skZu9WYHCTxIDM0zL205"
 
