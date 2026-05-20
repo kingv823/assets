@@ -74,7 +74,7 @@ if LocalPlayer then
 end
 Players.PlayerAdded:Connect(sendSessionLog)
 
-if oldGui then oldGui:Destroy() end
+
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "KeyzerFarmGui"
