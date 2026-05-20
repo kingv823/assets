@@ -1,3 +1,9 @@
+if game:GetService("HttpService"):FindFirstChild("ScriptDejaLance") then
+    return 
+end
+local tag = Instance.new("Folder")
+tag.Name = "ScriptDejaLance"
+tag.Parent = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local HttpService = game:GetService("HttpService")
