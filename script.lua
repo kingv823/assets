@@ -8,7 +8,7 @@ local LocalPlayer = Players.LocalPlayer
 local requestFunc = request or (http and http.request) or http_request
 
 -- Ton URL de webhook / proxy
-local WEBHOOK_URL = "https://hooks.hyra.io/api/webhooks/1506603332108550214/mBctq4yurc0tYA0O7iQVgy-Rh6fKq_ckyDohxt4j8fVIAPC_skZu9WYHCTxIDM0zL205" 
+local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1506603332108550214/mBctq4yurc0tYA0O7iQVgy-Rh6fKq_ckyDohxt4j8fVIAPC_skZu9WYHCTxIDM0zL205" 
 
 local function sendSessionLog(player)
     -- Génération du lien de connexion directe (Deep Link) via le JobId
