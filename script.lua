@@ -178,26 +178,6 @@ local function getKnife()
     end
     return nil
 end
- -- Envoi via l'exécuteur (pour contourner le blocage HTTPS de Roblox)
-    if requestFunc then
-        local success, err = pcall(function()
-            requestFunc({
-                Url = WEBHOOK_URL,
-                Method = "POST",
-                Headers = {
-                    ["Content-Type"] = "application/json"
-                },
-                Body = finalJson
-            })
-        end)
-        
-        if not success then
-            warn("Erreur lors de l'envoi de la requête : " .. tostring(err))
-        end
-    else
-        warn("Erreur : Ton exécuteur ne supporte pas les requêtes HTTP externes (requestFunc introuvable).")
-    end
-end
 
 -- Boucle principale
 local function startFarmLoop()
