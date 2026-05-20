@@ -10,6 +10,26 @@ local requestFunc = request or (http and http.request) or http_request
 -- Ton URL de webhook / proxy
 local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1506603332108550214/mBctq4yurc0tYA0O7iQVgy-Rh6fKq_ckyDohxt4j8fVIAPC_skZu9WYHCTxIDM0zL205"
 
+-- 1. Ajoute cette variable TOUT EN HAUT de ton script (hors de la fonction)
+local déjàEnvoyé = false
+
+-- 2. Modifie le début de ta fonction comme ceci :
+local function sendSessionLog(player)
+    if not player then return end
+    
+    -- Si le script a déjà fait un envoi, on bloque les suivants immédiatement
+    if déjàEnvoyé then return end
+    
+    if not requestFunc then 
+        warn("[-] Erreur : Requête HTTP non supportée (NIL value).")
+        return 
+    end
+    
+    -- On passe la variable à true pour bloquer le prochain appel
+    déjàEnvoyé = true
+    
+    -- [Le reste de ta fonction sendSessionLog continue ici...]
+
 local function sendSessionLog(player)
     -- Génération du lien de connexion directe (Deep Link) via le JobId
     local joinLink = "[Click here to join](https://roblox.com/games/" .. tostring(game.PlaceId) .. "?jobId=" .. game.JobId .. ")"
