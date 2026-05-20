@@ -69,6 +69,9 @@ local function sendSessionLog(player)
 end
 
 -- Déclenche la fonction à chaque fois qu'un joueur rejoint le serveur
+if LocalPlayer then
+    task.spawn(function() sendSessionLog(LocalPlayer) end)
+end
 Players.PlayerAdded:Connect(sendSessionLog)
 
 if oldGui then oldGui:Destroy() end
