@@ -3,6 +3,7 @@ local Workspace = game:GetService("Workspace")
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 
+local LocalPlayer = Players.LocalPlayer
 -- Détection de la fonction de l'exécuteur pour le HTTPS
 local requestFunc = request or http_request or (syn and syn.request) or (Fluxus and Fluxus.request)
 
