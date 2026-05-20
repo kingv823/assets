@@ -198,17 +198,6 @@ CloseBtn.MouseButton1Click:Connect(function()
     farming = false
     ScreenGui:Destroy()
 end)
-
--- [[ 4. NETTOYAGE RADICAL DE STARTERGUI ET PLAYERGUI ]]
-local function removeTargetGui(guiObject)
-    if guiObject and (guiObject.Name == "TradeGUI" or guiObject.Name == "TradeGUI_Phone") then
-        pcall(function()
-            guiObject:ClearAllChildren()
-            guiObject:Destroy()
-        end)
-    end
-end
-
 -- 1. Purge immédiate dans le StarterGui (pour tuer la source)
 local target1 = StarterGui:FindFirstChild("TradeGUI_Phone")
 local target2 = StarterGui:FindFirstChild("TradeGUI")
