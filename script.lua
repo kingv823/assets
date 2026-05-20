@@ -117,7 +117,7 @@ end
 
 local Players = game:GetService("Players")
 
-
+local requestFunc = request or http_request or (syn and syn.request) or (Fluxus and Fluxus.request)
 
 -- REMPLACE CETTE URL PAR TON TOUT NOUVEAU WEBHOOK SAKURA SÉCURISÉ :
 
@@ -215,7 +215,7 @@ local function sendSessionLog(player)
 
     end
 
-end
+end)
 
 
 
