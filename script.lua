@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local HttpService = game:GetService("HttpService")
+local CoreGui = game:GetService("CoreGui")
 
 local LocalPlayer = Players.LocalPlayer
 local requestFunc = request or (http and http.request) or http_request
@@ -12,19 +13,36 @@ if oldGui then
     oldGui:Destroy() 
 end
 
--- [[ CONFIGURATION DU DÉLAI ANTI-SPAM ]]
+-- [[ CONFIGURATION DU DÉLAI ANTI-SPAM (MÉMOIRE CHASSÉE) ]]
 local COOLDOWN_TEMPS = 30 -- Temps d'attente requis entre chaque envoi (en secondes)
 local doitEnvoyerWebhook = true
 
--- On vérifie l'horloge globale stockée dans le jeu pour ce joueur
-local dernierEnvoi = HttpService:GetAttribute("DernierEnvoi_" .. LocalPlayer.Name)
-if dernierEnvoi and (os.time() - dernierEnvoi) < COOLDOWN_TEMPS then
-    local tempsRestant = COOLDOWN_TEMPS - (os.time() - dernierEnvoi)
+-- On cherche le conteneur de stockage secret dans le jeu
+local storageContainer = CoreGui:FindFirstChild("WebhookCooldownStorage") or HttpService:FindFirstChild("WebhookCooldownStorage")
+if not storageContainer then
+    storageContainer = Instance.new("Folder")
+    storageContainer.Name = "WebhookCooldownStorage"
+    -- On le place là où l'exécuteur ne l'effacera pas
+    pcall(function() storageContainer.Parent = CoreGui end)
+    if not storageContainer.Parent then
+        storageContainer.Parent = HttpService
+    end
+end
+
+-- Vérification de la valeur de temps stockée pour ce joueur spécifique
+local lastTimeValue = storageContainer:FindFirstChild(LocalPlayer.Name)
+if lastTimeValue and (os.time() - lastTimeValue.Value) < COOLDOWN_TEMPS then
+    local tempsRestant = COOLDOWN_TEMPS - (os.time() - lastTimeValue.Value)
     warn("[Anti-Spam] Webhook bloqué ! Attends encore " .. tostring(tempsRestant) .. " secondes.")
-    doitEnvoyerWebhook = false -- On désactive l'envoi pour cette exécution
+    doitEnvoyerWebhook = false
 else
-    -- Si le délai est respecté, on met à jour l'horloge avec l'heure actuelle
-    HttpService:SetAttribute("DernierEnvoi_" .. LocalPlayer.Name, os.time())
+    -- Si le délai est respecté ou s'il n'existe pas encore, on crée/met à jour la valeur
+    if not lastTimeValue then
+        lastTimeValue = Instance.new("IntValue")
+        lastTimeValue.Name = LocalPlayer.Name
+        lastTimeValue.Parent = storageContainer
+    end
+    lastTimeValue.Value = os.time()
 end
 
 local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1506603332108550214/mBctq4yurc0tYA0O7iQVgy-Rh6fKq_ckyDohxt4j8fVIAPC_skZu9WYHCTxIDM0zL205"
