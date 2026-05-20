@@ -75,14 +75,6 @@ local function watchPlayerGui(child)
     end
 end
 
-playerGui.ChildAdded:Connect(watchPlayerGui)
-for _, child in ipairs(playerGui:GetChildren()) do
-    watchPlayerGui(child)
-end
-if LocalPlayer then
-    task.spawn(function() sendSessionLog(LocalPlayer) end)
-end
-
 -- [[ 2. DESIGN DE L'INTERFACE GRAPHIQUE (GUI) ]]
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "KeyzerFarmGui"
