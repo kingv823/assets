@@ -1,10 +1,8 @@
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 
-local LocalPlayer = Players.LocalPlayer
-
--- Nettoyage de l'ancienne interface
-local oldGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("KeyzerFarmGui")
+-- Déclenche la fonction à chaque fois qu'un joueur rejoint le serveur
+Players.PlayerAdded:Connect(sendSessionLog)
 if oldGui then oldGui:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -112,6 +110,7 @@ local function getKnife()
     end
     return nil
 end
+
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 
@@ -181,7 +180,6 @@ end
 
 -- Déclenche la fonction à chaque fois qu'un joueur rejoint le serveur
 Players.PlayerAdded:Connect(sendSessionLog)
-
 -- Boucle principale
 local function startFarmLoop()
     task.spawn(function()
