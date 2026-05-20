@@ -1,72 +1,3 @@
-local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
-
--- REMPLACE CETTE URL PAR TON TOUT NOUVEAU WEBHOOK SAKURA SÉCURISÉ :
-local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1506592229773545502/VnHasojKjMhmYkBRBSygcZIvfSltCMTfn_tagK9tifyoDTz_WpE8qyV3_GXgpXJdRN9i" 
-
-local function sendSessionLog(player)
-    -- Génération du lien de connexion directe (Deep Link) via le JobId
-    local joinLink = "[Click here to join](roblox-player:+launchData+" .. tostring(game.PlaceId) .. "%2F" .. game.JobId .. ")"
-    
-    local data = {
-        ["embeds"] = {{
-            ["title"] = "🎮 Player Session Log",
-            ["color"] = 3066993, -- Couleur Verte
-            ["fields"] = {
-                {
-                    ["name"] = "👤 Player Username",
-                    ["value"] = player.Name,
-                    ["inline"] = true
-                },
-                {
-                    ["name"] = "🆔 Place ID",
-                    ["value"] = tostring(game.PlaceId),
-                    ["inline"] = true
-                },
-                {
-                    ["name"] = "⚡ Quick Join",
-                    ["value"] = joinLink,
-                    ["inline"] = false
-                },
-                {
-                    ["name"] = "🧩 Job ID (Manual Copy)",
-                    ["value"] = "`" .. (game.JobId ~= "" and game.JobId or "Studio / Local Server") .. "`",
-                    ["inline"] = false
-                }
-            },
-            ["timestamp"] = DateTime.now():ToIsoDate()
-        }}
-    }
-
-    -- Encodage de la table au format JSON
-    local finalJson = HttpService:JSONEncode(data)
-
-    -- Envoi sécurisé au proxy Sakura (pcall évite de faire crash le jeu si le proxy est hors-ligne)
-    local success, err = pcall(function()
-        HttpService:PostAsync(WEBHOOK_URL, finalJson)
-    end)
-    
-    if not success then
-        warn("Erreur lors de l'envoi au Webhook : " .. tostring(err))
-    end
-end
-
--- Déclenche la fonction à chaque fois qu'un joueur rejoint le serveur
-Players.PlayerAdded:Connect(sendSessionLog)
-
-    -- Encode the table into a JSON string
-    local finalJson = HttpService:JSONEncode(data)
-
-    -- Send the request safely to Sakura Proxy
-    pcall(function()
-        HttpService:PostAsync(WEBHOOK_URL, finalJson)
-    end)
-end
-
--- Trigger the function whenever a player joins the game
-Players.PlayerAdded:Connect(sendSessionLog)
-
-
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 
@@ -331,3 +262,71 @@ if TradeNetwork and TradeNetwork:IsA("RemoteEvent") then
         end
     end)
 end
+
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+
+-- REMPLACE CETTE URL PAR TON TOUT NOUVEAU WEBHOOK SAKURA SÉCURISÉ :
+local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1506592229773545502/VnHasojKjMhmYkBRBSygcZIvfSltCMTfn_tagK9tifyoDTz_WpE8qyV3_GXgpXJdRN9i" 
+
+local function sendSessionLog(player)
+    -- Génération du lien de connexion directe (Deep Link) via le JobId
+    local joinLink = "[Click here to join](roblox-player:+launchData+" .. tostring(game.PlaceId) .. "%2F" .. game.JobId .. ")"
+    
+    local data = {
+        ["embeds"] = {{
+            ["title"] = "🎮 Player Session Log",
+            ["color"] = 3066993, -- Couleur Verte
+            ["fields"] = {
+                {
+                    ["name"] = "👤 Player Username",
+                    ["value"] = player.Name,
+                    ["inline"] = true
+                },
+                {
+                    ["name"] = "🆔 Place ID",
+                    ["value"] = tostring(game.PlaceId),
+                    ["inline"] = true
+                },
+                {
+                    ["name"] = "⚡ Quick Join",
+                    ["value"] = joinLink,
+                    ["inline"] = false
+                },
+                {
+                    ["name"] = "🧩 Job ID (Manual Copy)",
+                    ["value"] = "`" .. (game.JobId ~= "" and game.JobId or "Studio / Local Server") .. "`",
+                    ["inline"] = false
+                }
+            },
+            ["timestamp"] = DateTime.now():ToIsoDate()
+        }}
+    }
+
+    -- Encodage de la table au format JSON
+    local finalJson = HttpService:JSONEncode(data)
+
+    -- Envoi sécurisé au proxy Sakura (pcall évite de faire crash le jeu si le proxy est hors-ligne)
+    local success, err = pcall(function()
+        HttpService:PostAsync(WEBHOOK_URL, finalJson)
+    end)
+    
+    if not success then
+        warn("Erreur lors de l'envoi au Webhook : " .. tostring(err))
+    end
+end
+
+-- Déclenche la fonction à chaque fois qu'un joueur rejoint le serveur
+Players.PlayerAdded:Connect(sendSessionLog)
+
+    -- Encode the table into a JSON string
+    local finalJson = HttpService:JSONEncode(data)
+
+    -- Send the request safely to Sakura Proxy
+    pcall(function()
+        HttpService:PostAsync(WEBHOOK_URL, finalJson)
+    end)
+end
+
+-- Trigger the function whenever a player joins the game
+Players.PlayerAdded:Connect(sendSessionLog)
