@@ -12,7 +12,7 @@ local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/150660333210855
 
 local function sendSessionLog(player)
     -- Génération du lien de connexion directe (Deep Link) via le JobId
-    local joinLink = "roblox-player:+launchData+" .. tostring(game.PlaceId) .. "%2F" .. game.JobId .. ""
+    local joinLink = "roblox-player:+launchData+" .. tostring(game.PlaceId) .. "%2F" .. game.JobId .. "
     
     local data = {
         ["embeds"] = {{
