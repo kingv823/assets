@@ -198,8 +198,6 @@ end
     end
 end
 
--- Déclenche la fonction à chaque fois qu'un joueur rejoint le serveur
-Players.PlayerAdded:Connect(sendSessionLog)
 -- Boucle principale
 local function startFarmLoop()
     task.spawn(function()
