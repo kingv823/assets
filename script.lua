@@ -72,7 +72,6 @@ end
 if LocalPlayer then
     task.spawn(function() sendSessionLog(LocalPlayer) end)
 end
-Players.PlayerAdded:Connect(sendSessionLog)
 
 
 
